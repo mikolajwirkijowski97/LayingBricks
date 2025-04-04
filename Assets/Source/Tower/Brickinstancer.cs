@@ -4,7 +4,7 @@ using UnityEngine;
 /// <summary>
 /// Responsible for instantiating and rendering the bricks of a Tower procedural structure.
 /// Uses GPU instancing for efficient rendering of many bricks. Batches multiple levels
-/// into single DrawMeshInstanced calls where possible, respecting GPU limits.
+/// into single DrawMeshInstanced calls where possible.
 /// Optimised for static towers: Calculates and prepares batches only when Tower parameters change.
 /// Listens to Tower parameter changes to automatically rebuild its geometry caches and batches.
 /// </summary>
@@ -264,6 +264,8 @@ public class BrickInstancer : MonoBehaviour
         // --- Generate and Store Persistent Batches ---
         int totalLevelsToRender = Mathf.Min(_tower.Height, _levelStartYCache.Count);
         var currentBatchMatrices = new List<Matrix4x4>(MAX_INSTANCES_PER_DRAW_CALL); // Local list for building batches
+        // Calculate the number of bricks in the last level that is not fully filled
+        int lastLevelBrickCount = _tower.TotalBricks - (_tower.Height-1) * _tower.BricksPerLevel ;
 
         for (int level = 0; level < totalLevelsToRender; level++)
         {
@@ -285,7 +287,25 @@ public class BrickInstancer : MonoBehaviour
             else
             {
                 // Otherwise, add the current level's matrices to the existing batch.
-                currentBatchMatrices.AddRange(currentLevelMatrices);
+                // If this is the last level and it isnt a complete level, add only the amount of bricks remaining to 
+                // fill the batch, discarding the rest of the level. The discarded bricks are random but consistent between runs.
+                if (level == totalLevelsToRender - 1 && lastLevelBrickCount > 0)
+                {
+                    // Add only the remaining bricks to fill the batch
+                    int remainingBricks = lastLevelBrickCount;
+                    if (remainingBricks > 0 && remainingBricks < currentLevelMatrices.Length)
+                    {
+                        Matrix4x4[] partialLevelMatrices = new Matrix4x4[remainingBricks];
+                        if(!_tower.IsLastLevelOrdered) Shuffle(currentLevelMatrices, level); // Shuffle the remaining bricks
+                        System.Array.Copy(currentLevelMatrices, 0, partialLevelMatrices, 0, remainingBricks);
+                        currentBatchMatrices.AddRange(partialLevelMatrices);
+                    }
+                }
+                else
+                {
+                    // Add the full level matrices to the batch
+                    currentBatchMatrices.AddRange(currentLevelMatrices);
+                }
             }
 
             // If the batch is now exactly full, store it and clear the temp list.
@@ -294,6 +314,8 @@ public class BrickInstancer : MonoBehaviour
                  _persistentBatches.Add(currentBatchMatrices.ToArray());
                  currentBatchMatrices.Clear();
             }
+
+            
         }
 
         // After the loop, store any remaining matrices in the last partially filled batch.
@@ -402,7 +424,7 @@ public class BrickInstancer : MonoBehaviour
     /// <returns>The calculated height for bricks in this level.</returns>
     private float CalculateDeterministicLevelBrickHeight(int level) {
         // Combine seeds for unique, deterministic height per level
-        int seed = _tower.GetInstanceID() + level * LEVEL_SEED_MULTIPLIER + _tower.Seed;
+        int seed = level * _tower.Seed;
         Random.InitState(seed);
 
         // Use Tower's min/max height parameters
@@ -425,7 +447,7 @@ public class BrickInstancer : MonoBehaviour
     /// <returns>The rotation offset in radians.</returns>
     private float CalculateDeterministicLevelRotationOffset(int level) {
         // Combine seeds for unique, deterministic rotation per level (offset seed from height)
-        int seed = _tower.GetInstanceID() + level * LEVEL_SEED_MULTIPLIER + _tower.Seed + ROTATION_SEED_OFFSET; // Use constant
+        int seed = level * _tower.Seed; // Use constant
         Random.InitState(seed);
         // Return a random rotation offset around the Y axis
         return Random.Range(0f, 2f * Mathf.PI);
@@ -476,7 +498,7 @@ public class BrickInstancer : MonoBehaviour
     /// <returns>An array of Matrix4x4 transformations for the bricks, or an empty array if parameters are invalid.</returns>
     private Matrix4x4[] GenerateAndCacheSingleLevelMatrices(int level) {
         // Combine seeds for deterministic generation specific to this level's geometry
-        int seed = _tower.GetInstanceID() + level * LEVEL_SEED_MULTIPLIER + _tower.Seed;
+        int seed = level * _tower.Seed;
 
         // Get necessary parameters from the Tower component
         float circumference = _tower.Circumference;
@@ -529,6 +551,18 @@ public class BrickInstancer : MonoBehaviour
         Matrix4x4[] result = matrices.ToArray();
         _matricesCache[level] = result; // Cache the generated matrices for this level
         return result;
-     }
+    }
 
+    private void Shuffle<T>(IList<T> ts, int seed) {
+        // Initialize the random number generator with the provided seed
+        Random.InitState(seed);
+        var count = ts.Count;
+        var last = count - 1;
+        for (var i = 0; i < last; ++i) {
+            var r = Random.Range(i, count);
+            var tmp = ts[i];
+            ts[i] = ts[r];
+            ts[r] = tmp;
+        }
+    }
 } // End of BrickInstancer class

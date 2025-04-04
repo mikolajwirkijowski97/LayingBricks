@@ -21,6 +21,15 @@ public class Tower : MonoBehaviour
     [Tooltip("Number of vertical levels (floors) in the tower. Must be at least 1.")]
     [Min(1)] // Enforce minimum value directly in the inspector
     private int _height = 10;
+    
+    [SerializeField]
+    [Tooltip("Whether the last level is ordered or scrambled.")]
+    private bool _isLastLevelOrdered = true;
+
+    [SerializeField]
+    [Tooltip("The total amount of bricks in the tower. Other values are derived from this.")]
+    [Range(0,1000000)]
+    private int _totalBricks = 1000; 
 
     [SerializeField]
     [Tooltip("Radius of the tower's cylindrical shape. Must be positive.")]
@@ -77,6 +86,36 @@ public class Tower : MonoBehaviour
             int clampedValue = Mathf.Max(1, value); // Enforce minimum in setter too
             if (_height != clampedValue) {
                 _height = clampedValue;
+                OnParametersChanged?.Invoke();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets whether the last level of the tower is ordered or scrambled.
+    /// Invokes OnParametersChanged if the value changes.
+    /// </summary>
+    public bool IsLastLevelOrdered {
+        get { return _isLastLevelOrdered; }
+        set {
+            if (_isLastLevelOrdered != value) {
+                _isLastLevelOrdered = value;
+                OnParametersChanged?.Invoke();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the total number of bricks in the tower. Minimum value is 0.
+    /// Updates Height and invokes OnParametersChanged if the value changes.
+    /// </summary>
+    public int TotalBricks {
+        get { return _totalBricks; }
+        set {
+            int clampedValue = Mathf.Max(0, value); // Enforce minimum in setter too
+            Height = clampedValue / _bricksPerLevel;
+            if (_totalBricks != clampedValue) {
+                RecalculateHeight(); // Update dependent value
                 OnParametersChanged?.Invoke();
             }
         }
@@ -247,6 +286,8 @@ public class Tower : MonoBehaviour
     {
         // Store original values before validation to check if changes occurred
         bool needsNotification = false;
+        bool originalLastLevelOrdered = _isLastLevelOrdered;
+        int originalTotalBricks = _totalBricks;
         int originalHeight = _height;
         float originalRadius = _radius;
         float originalBrickDepth = _brickDepth;
@@ -256,8 +297,10 @@ public class Tower : MonoBehaviour
         int originalSeed = _seed;
         float originalWidthVariation = _brickWidthVariation;
 
+
         // Apply Min/Max and Range attributes constraints (redundant with attributes but safe)
         _height = Mathf.Max(1, _height);
+        _totalBricks = Mathf.Max(0, _totalBricks);
         _radius = Mathf.Max(0.1f, _radius);
         _brickDepth = Mathf.Max(0.01f, _brickDepth);
         _bricksPerLevel = Mathf.Max(1, _bricksPerLevel);
@@ -272,8 +315,9 @@ public class Tower : MonoBehaviour
              _minBrickHeight = _maxBrickHeight; // Adjust min to match max (handles direct max edit)
         }
 
-        // Update calculated values like circumference
-        RecalculateCircumference(); // This might change _circumference
+        // Update calculated values like circumference and height
+        RecalculateCircumference(); // 
+        RecalculateHeight();
 
         // Check if any relevant property actually changed value during validation/clamping
         needsNotification = _height != originalHeight ||
@@ -312,6 +356,20 @@ public class Tower : MonoBehaviour
          if (!Mathf.Approximately(_circumference, newCircumference)) {
             Circumference = newCircumference; // Use the private setter
             // Note: The event notification is handled by the Radius property setter, not needed here.
+         }
+    }
+
+    /// <summary>
+    /// Recalculates the tower's height based on the total number of bricks and bricks per level.
+    /// Only updates the internal field if the calculated value differs significantly.
+    /// </summary>
+    private void RecalculateHeight() {
+        // New height is total bricks divided by bricks per level, rounded up so theres
+        // always a level for the remaining bricks
+         int newHeight = (int)Math.Ceiling(_totalBricks / (float)_bricksPerLevel);
+         // Avoid unnecessary updates if the change is negligible
+         if (!_height.Equals(newHeight)) {
+            Height = newHeight; // Use the private setter
          }
     }
 }
