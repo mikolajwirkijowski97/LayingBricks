@@ -19,20 +19,30 @@ public class SwipeCameraMover : MonoBehaviour
     [Tooltip("How sensitive the vertical movement is to the swipe speed.")]
     [SerializeField] private float moveSensitivity = 0.1f;
 
+    [Tooltip("How quickly the camera moves to the target position.")]
+    [SerializeField] private float moveSpeed = 10f;
+
     [Tooltip("How sensitive the horizontal rotation is to the swipe speed.")]
-    [SerializeField] private float rotationSensitivity = 0.5f; // Rotation often needs higher sensitivity
+    [SerializeField] private float rotationSensitivity = 0.5f; 
 
     [Header("Clamping")]
     [Tooltip("Optional: Minimum Y position the camera can reach.")]
     [SerializeField] private bool clampYPosition = false;
     [SerializeField] private float minYPosition = 0f;
+    private float maxYPosition = 100f;
 
-    [Tooltip("Optional: Maximum Y position the camera can reach.")]
-    [SerializeField] private float maxYPosition = 100f;
+    private GameObject _targetYPosition;
 
 
     void Awake()
     {
+        Tower tower = FindFirstObjectByType<Tower>(); // Find the first Tower object in the scene
+        TowerGeometryGenerator towerGeometryGenerator = new TowerGeometryGenerator(tower);
+        if (towerGeometryGenerator != null)
+        {
+            maxYPosition = towerGeometryGenerator.GetTopLevelHeight(); // Set max Y position based on tower height
+            Debug.Log("Max canera Y Position: " + maxYPosition);
+        }
         // Default to the main camera if none is assigned
         if (targetCamera == null)
         {
@@ -52,6 +62,9 @@ public class SwipeCameraMover : MonoBehaviour
             enabled = false;
             return; // Stop execution if no target for rotation
         }
+
+        _targetYPosition = new GameObject("TargetYPosition"); // Create a new GameObject to hold the Y position
+        _targetYPosition.transform.position = targetCamera.transform.position; // Initialize target Y position
     }
 
     void Update()
@@ -81,17 +94,23 @@ public class SwipeCameraMover : MonoBehaviour
                 float verticalMovement = -touch.deltaPosition.y * moveSensitivity * Time.deltaTime;
 
                 // --- Apply Vertical Movement ---
-                // Move the camera in world space
-                targetCamera.transform.Translate(0f, verticalMovement, 0f, Space.World);
+                // Move the camera target position in world space
+                _targetYPosition.transform.Translate(0f, verticalMovement, 0f, Space.World);
 
                 // --- Optional Vertical Clamping ---
                 if (clampYPosition)
                 {
-                    Vector3 currentPosition = targetCamera.transform.position;
+                    Vector3 currentPosition = _targetYPosition.transform.position;
                     currentPosition.y = Mathf.Clamp(currentPosition.y, minYPosition, maxYPosition);
-                    targetCamera.transform.position = currentPosition;
+                    _targetYPosition.transform.position = currentPosition;
                 }
             }
         }
+
+        // Update the camera's position to follow the target Y position using lerp for smoothness
+        Vector3 targetPosition = _targetYPosition.transform.position;
+        targetPosition.x = targetCamera.transform.position.x; // Keep the X position unchanged
+        targetPosition.z = targetCamera.transform.position.z; // Keep the Z position unchanged
+        targetCamera.transform.position = Vector3.Lerp(targetCamera.transform.position, targetPosition, Time.deltaTime * moveSpeed); // Smoothly move to the new position
     }
 }
