@@ -151,42 +151,85 @@ public class BrickSpawner : MonoBehaviour
 
     }
 
+    // Method with combined tweens using DOTween Sequence
     void CreateAnimatedBricks(Matrix4x4[] matrices)
     {
-        float cumDelay = 0.0f;
-        // Loop through each matrix in the array and apply TRS (Translation, Rotation, Scale) to spawn bricks
-        foreach (Matrix4x4 matrix in matrices)
+        if (_brickPrefab == null)
         {
+            Debug.LogError("Brick Prefab is not assigned!", this);
+            return;
+        }
+
+        float cumDelay = 0.0f;
+        const float DELAY_TIME = 5.0f; // Total time over which delays are spread
+        const float ROTATION_SPEED = 8.0f; // Speed of rotation for the bricks
+
+        float animationDuration = 1.2f; // Duration for move, scale, and shake
+
+        // Loop through each matrix in the array and apply TRS (Translation, Rotation, Scale) to spawn bricks
+        for (int i = 0; i < matrices.Length; i++) // Use index for potential future needs
+        {
+            Matrix4x4 matrix = matrices[i];
+
             // Extract the position and rotation from the matrix
             Vector3 position = matrix.GetColumn(3);
-            
             Quaternion rotation = Quaternion.LookRotation(matrix.GetColumn(2), matrix.GetColumn(1));
-            
-            
-            // Instantiate the brick prefab at the specified position and rotation
-            float HEIGHT_OFFSET = 25.0f; // Offset to fall from
-            Vector3 startPosition = position + new Vector3(0, HEIGHT_OFFSET, 0); // Start the position above the target
-            AnimatedBrick brick = new AnimatedBrick(startPosition, position, 0.0f, Instantiate(_brickPrefab, startPosition, rotation));
-            // Extract the scale from the matrix and apply it to the brick prefab
-            Vector3 scale = new Vector3(
+
+            // Extract the target scale from the matrix
+            Vector3 targetScale = new Vector3(
                 matrix.GetColumn(0).magnitude, // Represents the scale along the brick's local X axis
                 matrix.GetColumn(1).magnitude, // Represents the scale along the brick's local Y axis
                 matrix.GetColumn(2).magnitude  // Represents the scale along the brick's local Z axis
             );
-            brick.brick.transform.localScale = scale; // Apply the scale to the brick prefab
 
-            const float DELAY_TIME = 10.0f; 
-            const int STREAM_COUNT = 3; // Number of streams of bricks falling
-            float processed_delay = Mathf.Repeat(cumDelay, DELAY_TIME/STREAM_COUNT);
+            // Instantiate the brick prefab slightly above the target position and rotated
+            float HEIGHT_OFFSET = 10.0f; // Offset to fall from
+            Vector3 startPosition = position + new Vector3(0, HEIGHT_OFFSET, 0);
+            GameObject brickGO = Instantiate(_brickPrefab, startPosition, rotation);
 
-            brick.brick.transform.DOMove(position, 1.0f).SetEase(Ease.InSine).SetDelay(processed_delay); // Animate the brick to fall to its target position
-            _animationQueue.Enqueue(brick); // Add the brick to the animation queue
-            
-            brick.brick.transform.DOShakeRotation(1.0f, new Vector3(45f, 45f, 45f))
-            .SetDelay(processed_delay); // Start tumbling when it should start falling 
+            // Set initial scale to zero for the animation
+            brickGO.transform.localScale = targetScale * 0f; // Start with a small scale
+
+            // Create an AnimatedBrick instance if you still need it for tracking/queueing
+            // Note: The delay property in AnimatedBrick might become redundant if handled solely by the Sequence
+            AnimatedBrick brick = new AnimatedBrick(startPosition, position, 0.0f, brickGO);
+             _animationQueue.Enqueue(brick); // Keep if the queue is used elsewhere
 
 
-            cumDelay += DELAY_TIME/matrices.Count();
+            // --- Combine Tweens into a Sequence ---
+
+            // Calculate the delay for this specific brick
+            // This repeats the delay every 'delaySpread' seconds using 'cumDelay'
+             float processed_delay = cumDelay;
+
+            // Create the DOTween Sequence
+            Sequence brickSequence = DOTween.Sequence();
+
+            // 1. Apply the initial delay before any animation starts in the sequence
+            //    Using SetDelay on the sequence applies it once at the beginning.
+            brickSequence.SetDelay(processed_delay);
+
+            // 3. Join the Scale animation to run concurrently with the Move animation
+            //    Starts from the current scale (Vector3.zero) to targetScale
+            brickSequence.Append(brickGO.transform.DOScale(targetScale, 0.3f)
+                                        .SetEase(Ease.OutBack)); // Pop-in effect for scale
+
+            // 2. Append the Move animation (starts after the sequence delay)
+            brickSequence.Append(brickGO.transform.DOMove(position, animationDuration)
+                                        .SetEase(Ease.InSine)); // Brick falls into place
+
+            // 4. Join the Shake Rotation animation to also run concurrently
+            brickSequence.Join(brickGO.transform.DOShakeRotation(animationDuration, Vector3.one*ROTATION_SPEED, 10, 90, false));
+                                        // Parameters: duration, strength, vibrato, randomness, fadeout(false)
+
+            // Optional: Set target for easier debugging or potential cleanup later
+            brickSequence.SetTarget(brickGO);
+
+            // Update cumulative delay for the next brick's calculation
+             if (matrices.Length > 0) // Avoid division by zero if matrices array is empty
+             {
+                 cumDelay += DELAY_TIME / matrices.Length; // Increment based on total time and number of bricks
+             }
         }
     }
 }
