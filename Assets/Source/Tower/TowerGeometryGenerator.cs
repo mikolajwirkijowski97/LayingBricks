@@ -93,6 +93,7 @@ public static class TowerGeometryGenerator
         return matrices.ToArray();
     }
 
+
     /// <summary>
     /// Calculates a deterministic height for bricks within a specific level.
     /// </summary>
