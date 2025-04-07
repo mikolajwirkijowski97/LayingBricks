@@ -34,6 +34,8 @@ public class TowerGeometryGenerator
             throw new System.ArgumentNullException(nameof(tower), "Tower reference cannot be null for Geometry Generator.");
         }
         _tower = tower;
+        _tower.OnParametersChanged -= HandleTowerParametersChanged; // Prevent double subscription
+        _tower.OnParametersChanged += HandleTowerParametersChanged;
         // Initial calculation will happen on first request or explicit rebuild call
     }
 
@@ -43,6 +45,7 @@ public class TowerGeometryGenerator
     /// </summary>
     public void MarkDirty()
     {
+
         _needsRebuild = true;
     }
 
@@ -59,7 +62,7 @@ public class TowerGeometryGenerator
              return;
         }
 
-
+        Debug.Log($"Rebuilding caches for Tower: {_tower.name}");
         // Clear all existing caches before recalculating
         _levelStartYCache.Clear();
         _levelHeightCache.Clear();
@@ -163,12 +166,12 @@ public class TowerGeometryGenerator
         // --- Generate Matrices if not cached ---
         if (_tower == null) return System.Array.Empty<Matrix4x4>(); // Safety check
 
-        // Retrieve necessary cached values
+        // Retrieve necessary cached values, if not found, recalculate the values
         if (!_levelStartYCache.TryGetValue(level, out float levelStartY) ||
             !_levelHeightCache.TryGetValue(level, out float levelBrickHeight))
         {
-            Debug.LogError($"Could not generate matrices for level {level}: Missing cached startY or height.");
-            return System.Array.Empty<Matrix4x4>();
+            levelStartY = GetLevelStartHeight(level); // Recalculate if not found
+            levelBrickHeight = GetLevelHeight(level); // Recalculate if not found
         }
 
         // Get parameters from the Tower object
@@ -297,4 +300,13 @@ public class TowerGeometryGenerator
             list[n] = value;
         }
     }
+
+    // --- Event Handler ---
+    private void HandleTowerParametersChanged()
+    {
+        // Tell the generator its source data changed
+        Debug.Log($"Tower parameters changed, marking geometry generator as dirty for Tower: {_tower.name}");
+        MarkDirty();
+    }
+
 }

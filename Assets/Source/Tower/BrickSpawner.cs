@@ -102,38 +102,43 @@ public class BrickSpawner : MonoBehaviour
 
     void Add10Bricks()
     {
-        int bricksToAdd = 10; // Number of bricks to add
+        int bricksToAdd = 210; // Number of bricks to add
         AddBricks(bricksToAdd); // Call the method to add bricks
     }
     void AddBricks(int count){
         Debug.Log($"Adding {count} bricks to the tower.", this);
         Debug.Log($"Tower height: {TowerData.Height}", this);
         Debug.Log($"Tower total bricks: {TowerData.TotalBricks}", this);
+
         int leftToAdd = count; // Number of bricks left to add
         int bricksMissingOnLast = TowerData.BricksPerLevel - TowerData.GetBricksOnLastLevel(); // Get the number of bricks on the last level
+        int bricksOnLastLevel = TowerData.GetBricksOnLastLevel(); // Get the number of bricks on the last level
+        int startingLevel = TowerData.Height; // Get the starting level of the tower
+        TowerData.AddBricks(count); // Update the total number of bricks in the tower
+
         List<Matrix4x4> newBricksTransforms = new List<Matrix4x4>(); // Initialize the list for new bricks transforms
         if(bricksMissingOnLast > 0)
         {
-            int level = TowerData.Height - 1; // Get the current level of the tower
+            int level = startingLevel - 1; // Get the current level of the tower
             int bricksToAdd = Mathf.Min(count, bricksMissingOnLast); // Calculate the number of bricks to add
-            newBricksTransforms.AddRange(_geometryGenerator.GetOrGenerateLevelMatrices(level).Skip(TowerData.GetBricksOnLastLevel()).Take(bricksToAdd)); // Get the transforms for the new bricks
+            newBricksTransforms.AddRange(_geometryGenerator.GetOrGenerateLevelMatrices(level).Skip(bricksOnLastLevel).Take(bricksToAdd)); // Get the transforms for the new bricks
             leftToAdd -= bricksToAdd; // Decrease the number of bricks left to add
         }
         
         int fullLevelsToAdd = leftToAdd / TowerData.BricksPerLevel; // Calculate the number of full levels to add
         for(int i = 0; i < fullLevelsToAdd; i++)
         {
-            int level = TowerData.Height + i; // Get the current level of the tower
+            int level = startingLevel + i; // Get the current level of the tower
             newBricksTransforms.AddRange(_geometryGenerator.GetOrGenerateLevelMatrices(level)); // Get the transforms for the new bricks
         }
 
         int remainingBricks = leftToAdd % TowerData.BricksPerLevel; // Calculate the number of remaining bricks to add
         if(remainingBricks > 0)
         {
-            int level = TowerData.Height + fullLevelsToAdd; // Get the current level of the tower
+            int level = startingLevel + fullLevelsToAdd; // Get the current level of the tower
             newBricksTransforms.AddRange(_geometryGenerator.GetOrGenerateLevelMatrices(level).Take(remainingBricks)); // Get the transforms for the new bricks
         }
-    
+
 
         if (newBricksTransforms != null && newBricksTransforms.Any())
         {
@@ -144,7 +149,6 @@ public class BrickSpawner : MonoBehaviour
             Debug.LogWarning("No transforms available for the new bricks.", this);
         }
 
-        TowerData.AddBricks(count); // Update the total number of bricks in the tower
     }
 
     void CreateAnimatedBricks(Matrix4x4[] matrices)
@@ -160,7 +164,7 @@ public class BrickSpawner : MonoBehaviour
             
             
             // Instantiate the brick prefab at the specified position and rotation
-            float HEIGHT_OFFSET = 20.0f; // Offset to fall from
+            float HEIGHT_OFFSET = 25.0f; // Offset to fall from
             Vector3 startPosition = position + new Vector3(0, HEIGHT_OFFSET, 0); // Start the position above the target
             AnimatedBrick brick = new AnimatedBrick(startPosition, position, 0.0f, Instantiate(_brickPrefab, startPosition, rotation));
             // Extract the scale from the matrix and apply it to the brick prefab
@@ -180,6 +184,7 @@ public class BrickSpawner : MonoBehaviour
             
             brick.brick.transform.DOShakeRotation(1.0f, new Vector3(45f, 45f, 45f))
             .SetDelay(processed_delay); // Start tumbling when it should start falling 
+
 
             cumDelay += DELAY_TIME/matrices.Count();
         }

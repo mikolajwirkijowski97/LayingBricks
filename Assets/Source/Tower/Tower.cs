@@ -392,5 +392,7 @@ public class Tower : MonoBehaviour
         TotalBricks += count; // Update the total number of bricks
         // Recalculate height and notify listeners
         RecalculateHeight(); // Update dependent value
+        OnParametersChanged?.Invoke(); // Notify listeners of the change
+
     }
 }

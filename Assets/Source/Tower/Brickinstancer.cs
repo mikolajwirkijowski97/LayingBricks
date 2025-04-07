@@ -184,8 +184,9 @@ public class TowerInstancedRenderer : MonoBehaviour
     {
         // Tell the generator its source data changed
         _geometryGenerator?.MarkDirty();
+        // Dont rebuild batches for now.
         // Mark that our rendering batches need to be rebuilt based on new geometry
-        MarkBatchesDirty();
+        //MarkBatchesDirty();
     }
 
     // --- Private Helper Methods ---
