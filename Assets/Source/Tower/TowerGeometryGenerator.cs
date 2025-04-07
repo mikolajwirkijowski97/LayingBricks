@@ -2,144 +2,253 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// Provides static methods to calculate the geometric properties (position, rotation, scale)
-/// of bricks for a procedural tower level based on specified parameters.
-/// Ensures deterministic results based on provided seeds.
+/// Calculates and caches geometric properties (position, rotation, scale, height)
+/// for the bricks of a specific procedural Tower instance.
+/// Ensures deterministic results based on the Tower's seed and parameters.
+/// Recalculates caches when the associated Tower's parameters change.
 /// </summary>
-public static class TowerGeometryGenerator
+public class TowerGeometryGenerator
 {
     // --- Constants ---
-    private const float MIN_BRICK_WIDTH_THRESHOLD = 0.001f; // Minimum width to consider a brick valid
+    private const float MIN_BRICK_WIDTH_THRESHOLD = 0.001f;
+    private const int LEVEL_GEOMETRY_SEED_MULTIPLIER = 1000;
+    private const int LEVEL_ROTATION_SEED_OFFSET = 1;
+
+    // --- Private Fields ---
+    private readonly Tower _tower; // Reference to the tower definition
+
+    // Caches managed by this instance
+    private readonly Dictionary<int, float> _levelStartYCache = new Dictionary<int, float>();
+    private readonly Dictionary<int, float> _levelHeightCache = new Dictionary<int, float>();
+    private readonly Dictionary<int, Matrix4x4[]> _matricesCache = new Dictionary<int, Matrix4x4[]>();
+    private bool _needsRebuild = true;
 
     /// <summary>
-    /// Generates the transformation matrices for all bricks in a single tower level.
-    /// Calculates position, rotation, and scale for each brick based on input parameters.
+    /// Creates a geometry generator instance for a specific Tower.
     /// </summary>
-    /// <param name="level">The zero-based index of the tower level.</param>
-    /// <param name="bricksPerLevel">Number of bricks for this level.</param>
-    /// <param name="radius">The radius of the tower level.</param>
-    /// <param name="circumference">The circumference of the tower level.</param>
-    /// <param name="brickDepth">The depth (thickness) of the bricks.</param>
-    /// <param name="levelBrickHeight">The height of the bricks for this specific level.</param>
-    /// <param name="brickWidthVariation">Maximum percentage variation for brick widths (0 to 0.9).</param>
-    /// <param name="levelStartY">The starting Y coordinate (height) for the base of this level.</param>
-    /// <param name="levelSeed">A deterministic seed specific to this level's geometry generation.</param>
-    /// <param name="levelRotationSeed">A deterministic seed specific to this level's rotation offset.</param>
-    /// <returns>An array of Matrix4x4 transformations for the bricks in the level, or an empty array if parameters are invalid.</returns>
-    public static Matrix4x4[] GenerateLevelMatrices(
-        int level,
-        int bricksPerLevel,
-        float radius,
-        float circumference,
-        float brickDepth,
-        float levelBrickHeight,
-        float brickWidthVariation,
-        float levelStartY,
-        int levelSeed,
-        int levelRotationSeed)
+    /// <param name="tower">The Tower component defining the structure.</param>
+    public TowerGeometryGenerator(Tower tower)
     {
-        if (bricksPerLevel <= 0 || radius <= 0 || circumference <= 0 || levelBrickHeight <= 0)
+        if (tower == null)
         {
-            return System.Array.Empty<Matrix4x4>(); // Return empty array for invalid inputs
+            throw new System.ArgumentNullException(nameof(tower), "Tower reference cannot be null for Geometry Generator.");
+        }
+        _tower = tower;
+        // Initial calculation will happen on first request or explicit rebuild call
+    }
+
+    /// <summary>
+    /// Marks the internal caches as dirty, forcing recalculation on the next data request.
+    /// Should be called when the associated Tower's parameters change.
+    /// </summary>
+    public void MarkDirty()
+    {
+        _needsRebuild = true;
+    }
+
+    /// <summary>
+    /// Ensures internal caches (start heights, level heights) are populated.
+    /// Performs calculations only if marked as dirty.
+    /// </summary>
+    public void RebuildCachesIfNeeded()
+    {
+        if (!_needsRebuild) return;
+        if (_tower == null) // Should not happen due to constructor check, but safety first
+        {
+             Debug.LogError("TowerGeometryGenerator cannot rebuild caches: Tower reference is null.");
+             return;
         }
 
-        // Calculate level-specific rotation offset
-        float rotationOffset = CalculateDeterministicLevelRotationOffset(levelRotationSeed);
 
-        // Generate and normalize brick widths for this level
-        List<float> widths = GenerateRandomDistances(bricksPerLevel, circumference, brickWidthVariation, levelSeed);
+        // Clear all existing caches before recalculating
+        _levelStartYCache.Clear();
+        _levelHeightCache.Clear();
+        _matricesCache.Clear();
+
+        // --- Recalculate Heights and Start Positions ---
+        float accumulatedHeight = 0f;
+        _levelStartYCache[0] = 0f; // Level 0 always starts at 0
+
+        int levelsToCalculate = _tower.Height;
+        for (int i = 0; i < levelsToCalculate; i++)
+        {
+            // Calculate and cache height for level i
+            int heightSeed = i * _tower.Seed;
+            float currentLevelHeight = CalculateDeterministicLevelBrickHeightInternal(_tower.MinBrickHeight, _tower.MaxBrickHeight, heightSeed);
+            _levelHeightCache[i] = currentLevelHeight;
+
+            // Cache start Y for level i (using previously accumulated height)
+             if (!_levelStartYCache.ContainsKey(i)) _levelStartYCache[i] = accumulatedHeight;
+             else _levelStartYCache[i] = accumulatedHeight; // Should be safe to overwrite
+
+            // Accumulate height for the next level's start Y
+            accumulatedHeight += currentLevelHeight;
+
+            // Cache start Y for level i+1
+             if (!_levelStartYCache.ContainsKey(i + 1)) _levelStartYCache[i + 1] = accumulatedHeight;
+             else _levelStartYCache[i + 1] = accumulatedHeight;
+        }
+        // Ensure cache entry exists for height *after* the last level
+        if (!_levelStartYCache.ContainsKey(levelsToCalculate)) {
+             _levelStartYCache[levelsToCalculate] = accumulatedHeight;
+        }
+        // --- End Height Calculation ---
+
+
+        _needsRebuild = false; // Caches are now up-to-date
+    }
+
+
+    /// <summary>
+    /// Gets the calculated height for bricks within a specific level.
+    /// Ensures caches are up-to-date before returning.
+    /// </summary>
+    /// <param name="level">The zero-based index of the tower level.</param>
+    /// <returns>The calculated height for bricks in this level. Returns 0 if level is invalid or caches couldn't be built.</returns>
+    public float GetLevelHeight(int level)
+    {
+        RebuildCachesIfNeeded(); // Ensure height cache is populated
+        if (_levelHeightCache.TryGetValue(level, out float height))
+        {
+            return height;
+        }
+        // Level might be out of bounds (e.g., negative or >= tower.Height)
+        // Debug.LogWarning($"Could not find cached height for level {level}. Tower height is {_tower?.Height ?? -1}.");
+        return 0f;
+    }
+
+     /// <summary>
+    /// Gets the calculated starting Y position (height) for the base of a specific tower level.
+    /// Ensures caches are up-to-date before returning.
+    /// </summary>
+    /// <param name="level">The zero-based index of the tower level.</param>
+    /// <returns>The starting Y coordinate of the specified level. Returns 0 if level is invalid or caches couldn't be built.</returns>
+     public float GetLevelStartHeight(int level) {
+        RebuildCachesIfNeeded(); // Ensure start Y cache is populated
+        return _levelStartYCache.TryGetValue(level, out float height) ? height : 0f;
+     }
+
+
+    /// <summary>
+    /// Calculates the total height of the tower structure (Y-coordinate of the top surface of the highest level).
+    /// Ensures caches are up-to-date before returning.
+    /// </summary>
+    /// <returns>The total height of the tower. Returns 0 if caches couldn't be built.</returns>
+    public float GetTopLevelHeight()
+    {
+        RebuildCachesIfNeeded(); // Ensure caches are populated
+
+        // The start height of the level *after* the last one is the total height
+        int levels = _tower?.Height ?? 0;
+        return _levelStartYCache.TryGetValue(levels, out float totalHeight) ? totalHeight : 0f;
+    }
+
+
+    /// <summary>
+    /// Gets or generates the transformation matrices for all bricks in a single tower level.
+    /// Uses cached results if available after ensuring caches are rebuilt.
+    /// </summary>
+    /// <param name="level">The zero-based index of the tower level.</param>
+    /// <returns>An array of Matrix4x4 transformations for the bricks in the level, or an empty array if parameters are invalid.</returns>
+    public Matrix4x4[] GetOrGenerateLevelMatrices(int level)
+    {
+        RebuildCachesIfNeeded(); // Ensure all caches (_levelStartYCache, _levelHeightCache) are populated
+
+        // Check matrix cache first
+        if (_matricesCache.TryGetValue(level, out var cachedMatrices))
+        {
+            return cachedMatrices;
+        }
+
+        // --- Generate Matrices if not cached ---
+        if (_tower == null) return System.Array.Empty<Matrix4x4>(); // Safety check
+
+        // Retrieve necessary cached values
+        if (!_levelStartYCache.TryGetValue(level, out float levelStartY) ||
+            !_levelHeightCache.TryGetValue(level, out float levelBrickHeight))
+        {
+            Debug.LogError($"Could not generate matrices for level {level}: Missing cached startY or height.");
+            return System.Array.Empty<Matrix4x4>();
+        }
+
+        // Get parameters from the Tower object
+        int bricksPerLevel = _tower.BricksPerLevel;
+        float radius = _tower.Radius;
+        float circumference = _tower.Circumference;
+        float brickDepth = _tower.BrickDepth;
+        float brickWidthVariation = _tower.BrickWidthVariation;
+
+        // Validate essential parameters
+        if (bricksPerLevel <= 0 || radius <= 0 || circumference <= 0 || levelBrickHeight <= 0)
+        {
+            _matricesCache[level] = System.Array.Empty<Matrix4x4>(); // Cache empty result
+            return System.Array.Empty<Matrix4x4>();
+        }
+
+        // Calculate level-specific seeds
+        int levelGeoSeed = level * _tower.Seed * LEVEL_GEOMETRY_SEED_MULTIPLIER;
+        int levelRotSeed = levelGeoSeed + LEVEL_ROTATION_SEED_OFFSET;
+
+        float rotationOffset = CalculateDeterministicLevelRotationOffset(levelRotSeed);
+        List<float> widths = GenerateRandomDistances(bricksPerLevel, circumference, brickWidthVariation, levelGeoSeed);
         NormalizeDistances(widths, circumference);
 
         List<Matrix4x4> matrices = new List<Matrix4x4>(bricksPerLevel);
-        float currentAngle = rotationOffset; // Start angle includes level offset
+        float currentAngle = rotationOffset;
 
         for (int i = 0; i < widths.Count; i++)
         {
             float brickWidth = widths[i];
-            // Skip bricks that are too narrow after normalization
             if (brickWidth <= MIN_BRICK_WIDTH_THRESHOLD) continue;
 
-            // Calculate angle spanned by this brick's width
-            // Angle = ArcLength / Radius
             float halfArcAngle = (brickWidth / 2f) / radius;
-
-            // Position the brick at the center of its arc segment
             float centerAngle = currentAngle + halfArcAngle;
-            centerAngle %= (2f * Mathf.PI); // Keep angle within 0 to 2PI
+            centerAngle %= (2f * Mathf.PI);
 
-            // Calculate position in world space
             float x = Mathf.Cos(centerAngle) * radius;
             float z = Mathf.Sin(centerAngle) * radius;
-            float yPos = levelStartY + levelBrickHeight / 2.0f; // Center brick vertically
+            float yPos = levelStartY + levelBrickHeight / 2.0f;
             Vector3 position = new Vector3(x, yPos, z);
 
-            // Calculate rotation to face outwards from the center
-            // Look direction is from origin towards the point on the circle
             Vector3 lookDirection = new Vector3(x, 0, z).normalized;
-            if (lookDirection == Vector3.zero) lookDirection = Vector3.forward; // Handle case at origin (shouldn't happen with radius > 0)
+            if (lookDirection == Vector3.zero) lookDirection = Vector3.forward;
             Quaternion rotation = Quaternion.LookRotation(lookDirection, Vector3.up);
 
-            // Define scale based on calculated dimensions
             Vector3 scale = new Vector3(brickWidth, levelBrickHeight, brickDepth);
-
-            // Create the transformation matrix
             Matrix4x4 matrix = Matrix4x4.TRS(position, rotation, scale);
             matrices.Add(matrix);
 
-            // Advance the angle for the next brick (move by the full width)
             currentAngle += halfArcAngle * 2f;
         }
 
-        return matrices.ToArray();
+        Matrix4x4[] result = matrices.ToArray();
+        _matricesCache[level] = result; // Cache the generated matrices
+        return result;
     }
 
 
-    /// <summary>
-    /// Calculates a deterministic height for bricks within a specific level.
-    /// </summary>
-    /// <param name="minBrickHeight">Minimum allowed height.</param>
-    /// <param name="maxBrickHeight">Maximum allowed height.</param>
-    /// <param name="heightSeed">Seed for deterministic height calculation.</param>
-    /// <returns>The calculated height for bricks in this level.</returns>
-    public static float CalculateDeterministicLevelBrickHeight(float minBrickHeight, float maxBrickHeight, int heightSeed)
+    // --- Private Static Helper Methods --- (These remain static as they don't depend on instance state)
+
+    private static float CalculateDeterministicLevelBrickHeightInternal(float minBrickHeight, float maxBrickHeight, int heightSeed)
     {
-        // Initialize RNG with a seed specific to this level's height
         Random.InitState(heightSeed);
-
-        // Ensure max is not less than min
         if (minBrickHeight > maxBrickHeight) maxBrickHeight = minBrickHeight;
-
-        // Return min height if range is negligible, otherwise random within range
         if (Mathf.Approximately(minBrickHeight, maxBrickHeight)) return minBrickHeight;
+        if (minBrickHeight >= maxBrickHeight) return minBrickHeight; // Handles potential float precision issue with Approx
         return Random.Range(minBrickHeight, maxBrickHeight);
     }
 
-    // --- Private Static Helper Methods ---
-
-    /// <summary>
-    /// Generates a list of pseudo-random distances (representing brick widths).
-    /// </summary>
-    /// <param name="brickCount">Number of bricks for the level.</param>
-    /// <param name="circumference">Total circumference to fill.</param>
-    /// <param name="widthVariation">Allowed width variation percentage.</param>
-    /// <param name="randomSeed">Seed for deterministic random generation.</param>
-    /// <returns>A list of calculated brick widths.</returns>
     private static List<float> GenerateRandomDistances(int brickCount, float circumference, float widthVariation, int randomSeed)
     {
-        // Initialize RNG with a seed specific to this level for deterministic results
         Random.InitState(randomSeed);
         List<float> distances = new List<float>(brickCount);
-        if (brickCount <= 0 || circumference <= 0) return distances; // Handle invalid input
+        if (brickCount <= 0 || circumference <= 0) return distances;
 
-        // Calculate average and range for randomized widths
         float avgDistance = circumference / brickCount;
         float minDistance = avgDistance * (1.0f - widthVariation);
         float maxDistance = avgDistance * (1.0f + widthVariation);
-
-        // Ensure minDistance is not negative (can happen if widthVariation is high)
         minDistance = Mathf.Max(0f, minDistance);
 
-        // Generate random widths within the calculated range
         float totalWidth = 0f;
         for (int i = 0; i < brickCount; i++)
         {
@@ -148,56 +257,44 @@ public static class TowerGeometryGenerator
             totalWidth += width;
         }
 
-        // Basic check to avoid division by zero if totalWidth ends up being ~0
         if (totalWidth <= Mathf.Epsilon)
         {
-            // Handle degenerate case: Assign equal widths if randomization failed
             distances.Clear();
             float equalWidth = circumference / brickCount;
-            for (int i = 0; i < brickCount; i++)
-            {
-                distances.Add(equalWidth);
-            }
+            for (int i = 0; i < brickCount; i++) distances.Add(equalWidth);
         }
-
         return distances;
     }
 
-    /// <summary>
-    /// Normalizes a list of distances (brick widths) so that their sum equals a target sum (circumference).
-    /// Modifies the input list directly.
-    /// </summary>
-    /// <param name="distances">The list of distances to normalize.</param>
-    /// <param name="targetSum">The desired sum of the distances.</param>
     private static void NormalizeDistances(List<float> distances, float targetSum)
     {
         if (distances == null || distances.Count == 0 || targetSum <= 0) return;
-
-        // Calculate the current sum of distances
         float currentSum = 0f;
         foreach (float d in distances) { currentSum += d; }
-
-        // Avoid division by zero or normalizing if sum is already correct or invalid
         if (currentSum <= Mathf.Epsilon || Mathf.Approximately(currentSum, targetSum)) return;
-
-        // Calculate scaling factor and apply it to each distance
         float scale = targetSum / currentSum;
-        for (int i = 0; i < distances.Count; i++)
-        {
-            distances[i] *= scale;
-        }
+        for (int i = 0; i < distances.Count; i++) { distances[i] *= scale; }
     }
 
-    /// <summary>
-    /// Calculates a deterministic rotation offset (in radians) for a specific level's rotation seed.
-    /// </summary>
-    /// <param name="rotationSeed">Seed for deterministic rotation generation.</param>
-    /// <returns>The rotation offset in radians.</returns>
     private static float CalculateDeterministicLevelRotationOffset(int rotationSeed)
     {
-        // Initialize RNG with the specific seed for rotation
         Random.InitState(rotationSeed);
-        // Return a random rotation offset around the Y axis (0 to 360 degrees in radians)
         return Random.Range(0f, 2f * Mathf.PI);
+    }
+
+        /// <summary>
+    /// Shuffles the elements of a list in place using the Fisher-Yates algorithm
+    /// and a specific seed for deterministic results. Public static as it's a general utility.
+    /// </summary>
+    public static void Shuffle<T>(IList<T> list, int seed) {
+        Random.InitState(seed);
+        int n = list.Count;
+        while (n > 1) {
+            n--;
+            int k = Random.Range(0, n + 1);
+            T value = list[k];
+            list[k] = list[n];
+            list[n] = value;
+        }
     }
 }
