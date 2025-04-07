@@ -100,17 +100,51 @@ public class BrickSpawner : MonoBehaviour
         
     }
 
-    void Add10Bricks(){
-        int level = TowerData.Height - 1; // Get the current level of the tower
-        Matrix4x4[] newBricksTransforms = _geometryGenerator.GetOrGenerateLevelMatrices(level); // Get the transforms for the new bricks
-        if (newBricksTransforms != null && newBricksTransforms.Length > 0)
+    void Add10Bricks()
+    {
+        int bricksToAdd = 10; // Number of bricks to add
+        AddBricks(bricksToAdd); // Call the method to add bricks
+    }
+    void AddBricks(int count){
+        Debug.Log($"Adding {count} bricks to the tower.", this);
+        Debug.Log($"Tower height: {TowerData.Height}", this);
+        Debug.Log($"Tower total bricks: {TowerData.TotalBricks}", this);
+        int leftToAdd = count; // Number of bricks left to add
+        int bricksMissingOnLast = TowerData.BricksPerLevel - TowerData.GetBricksOnLastLevel(); // Get the number of bricks on the last level
+        List<Matrix4x4> newBricksTransforms = new List<Matrix4x4>(); // Initialize the list for new bricks transforms
+        if(bricksMissingOnLast > 0)
         {
-            CreateAnimatedBricks(newBricksTransforms); // Create animated bricks using the transforms
+            int level = TowerData.Height - 1; // Get the current level of the tower
+            int bricksToAdd = Mathf.Min(count, bricksMissingOnLast); // Calculate the number of bricks to add
+            newBricksTransforms.AddRange(_geometryGenerator.GetOrGenerateLevelMatrices(level).Skip(TowerData.GetBricksOnLastLevel()).Take(bricksToAdd)); // Get the transforms for the new bricks
+            leftToAdd -= bricksToAdd; // Decrease the number of bricks left to add
+        }
+        
+        int fullLevelsToAdd = leftToAdd / TowerData.BricksPerLevel; // Calculate the number of full levels to add
+        for(int i = 0; i < fullLevelsToAdd; i++)
+        {
+            int level = TowerData.Height + i; // Get the current level of the tower
+            newBricksTransforms.AddRange(_geometryGenerator.GetOrGenerateLevelMatrices(level)); // Get the transforms for the new bricks
+        }
+
+        int remainingBricks = leftToAdd % TowerData.BricksPerLevel; // Calculate the number of remaining bricks to add
+        if(remainingBricks > 0)
+        {
+            int level = TowerData.Height + fullLevelsToAdd; // Get the current level of the tower
+            newBricksTransforms.AddRange(_geometryGenerator.GetOrGenerateLevelMatrices(level).Take(remainingBricks)); // Get the transforms for the new bricks
+        }
+    
+
+        if (newBricksTransforms != null && newBricksTransforms.Any())
+        {
+            CreateAnimatedBricks(newBricksTransforms.ToArray()); // Create animated bricks using the transforms
         }
         else
         {
             Debug.LogWarning("No transforms available for the new bricks.", this);
         }
+
+        TowerData.AddBricks(count); // Update the total number of bricks in the tower
     }
 
     void CreateAnimatedBricks(Matrix4x4[] matrices)

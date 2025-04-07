@@ -113,6 +113,7 @@ public class Tower : MonoBehaviour
         get { return _totalBricks; }
         set {
             int clampedValue = Mathf.Max(0, value); // Enforce minimum in setter too
+            _totalBricks = clampedValue; // Update total bricks
             Height = clampedValue / _bricksPerLevel;
             if (_totalBricks != clampedValue) {
                 RecalculateHeight(); // Update dependent value
@@ -371,5 +372,25 @@ public class Tower : MonoBehaviour
          if (!_height.Equals(newHeight)) {
             Height = newHeight; // Use the private setter
          }
+    }
+
+    /// --- Public Methods ---
+    /// <summary>
+    /// Returns how many bricks are on the last level of the tower.
+    /// </summary>
+    /// <returns>Number of bricks on the last level.</returns>
+    public int GetBricksOnLastLevel()
+    {
+        return _totalBricks % _bricksPerLevel == 0 ? _bricksPerLevel : _totalBricks % _bricksPerLevel;
+    }
+
+/// <summary>
+/// Updates the count of bricks and height and all other parameters of the tower.
+/// </summary>
+/// <param name="count"> The number of bricks to add</param>
+    public void AddBricks(int count){
+        TotalBricks += count; // Update the total number of bricks
+        // Recalculate height and notify listeners
+        RecalculateHeight(); // Update dependent value
     }
 }
