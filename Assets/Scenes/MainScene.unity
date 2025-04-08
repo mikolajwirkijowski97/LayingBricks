@@ -539,7 +539,7 @@ MonoBehaviour:
   m_VolumeTrigger: {fileID: 0}
   m_VolumeFrameworkUpdateModeOption: 2
   m_RenderPostProcessing: 1
-  m_Antialiasing: 1
+  m_Antialiasing: 3
   m_AntialiasingQuality: 2
   m_StopNaN: 1
   m_Dithering: 1
@@ -553,7 +553,7 @@ MonoBehaviour:
   m_RequiresColorTexture: 0
   m_Version: 2
   m_TaaSettings:
-    m_Quality: 4
+    m_Quality: 2
     m_FrameInfluence: 0.1
     m_JitterScale: 1
     m_MipBias: 0
@@ -1038,9 +1038,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1a83614636c95984ea5cf1c99855bacd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _height: 1
+  _height: 17
   _isLastLevelOrdered: 1
-  _totalBricks: 10
+  _totalBricks: 660
   _radius: 5
   _circumference: 31.415928
   _brickDepth: 0.31
