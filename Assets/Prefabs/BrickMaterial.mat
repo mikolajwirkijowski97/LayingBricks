@@ -103,10 +103,12 @@ Material:
     - _Glossiness: 0.433
     - _GlossyReflections: 0
     - _Metallic: 0.175
+    - _NoiseAmount: 0.1
     - _OcclusionStrength: 1
     - _Parallax: 0.005
     - _QueueControl: 0
     - _QueueOffset: 0
+    - _RandomSeed: 7.682809
     - _ReceiveShadows: 1
     - _Smoothness: 0.5
     - _SmoothnessTextureChannel: 0
