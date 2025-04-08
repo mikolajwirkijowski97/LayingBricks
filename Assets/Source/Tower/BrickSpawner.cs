@@ -102,7 +102,7 @@ public class BrickSpawner : MonoBehaviour
 
     void Add10Bricks()
     {
-        int bricksToAdd = 210; // Number of bricks to add
+        int bricksToAdd = 11; // Number of bricks to add
         AddBricks(bricksToAdd); // Call the method to add bricks
     }
     void AddBricks(int count){
@@ -186,6 +186,9 @@ public class BrickSpawner : MonoBehaviour
             float HEIGHT_OFFSET = 10.0f; // Offset to fall from
             Vector3 startPosition = position + new Vector3(0, HEIGHT_OFFSET, 0);
             GameObject brickGO = Instantiate(_brickPrefab, startPosition, rotation);
+
+            // Set the RandomSeed parameter of the brickGO material
+            brickGO.GetComponent<Renderer>().material.SetFloat("_RandomSeed", UnityEngine.Random.Range(0.0f, 16.0f)); // Set random seed for the material
 
             // Set initial scale to zero for the animation
             brickGO.transform.localScale = targetScale * 0f; // Start with a small scale
