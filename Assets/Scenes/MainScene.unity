@@ -572,12 +572,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetObject: {fileID: 897607781}
-  targetCamera: {fileID: 0}
+  targetCamera: {fileID: 330585545}
   moveSensitivity: 5
+  moveSpeed: 10
   rotationSensitivity: 20
-  clampYPosition: 0
+  clampYPosition: 1
   minYPosition: 0
-  maxYPosition: 100
 --- !u!1 &337947580
 GameObject:
   m_ObjectHideFlags: 0

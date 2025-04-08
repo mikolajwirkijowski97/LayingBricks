@@ -31,6 +31,10 @@ public class SwipeCameraMover : MonoBehaviour
     [SerializeField] private float minYPosition = 0f;
     private float maxYPosition = 100f;
 
+    [SerializeField] [Tooltip("Optional: Maximum Y offset above maxY the camera can reach.")]
+    private float maxYOffset = 0f;
+
+
     private GameObject _targetYPosition;
 
 
@@ -101,7 +105,7 @@ public class SwipeCameraMover : MonoBehaviour
                 if (clampYPosition)
                 {
                     Vector3 currentPosition = _targetYPosition.transform.position;
-                    currentPosition.y = Mathf.Clamp(currentPosition.y, minYPosition, maxYPosition);
+                    currentPosition.y = Mathf.Clamp(currentPosition.y, minYPosition, maxYPosition + maxYOffset); // Clamp Y position
                     _targetYPosition.transform.position = currentPosition;
                 }
             }

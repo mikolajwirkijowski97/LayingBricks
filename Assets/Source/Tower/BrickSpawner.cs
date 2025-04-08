@@ -102,7 +102,7 @@ public class BrickSpawner : MonoBehaviour
 
     void Add10Bricks()
     {
-        int bricksToAdd = 210; // Number of bricks to add
+        int bricksToAdd = 11; // Number of bricks to add
         AddBricks(bricksToAdd); // Call the method to add bricks
     }
     void AddBricks(int count){
