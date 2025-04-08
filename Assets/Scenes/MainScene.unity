@@ -578,6 +578,7 @@ MonoBehaviour:
   rotationSensitivity: 20
   clampYPosition: 1
   minYPosition: 0
+  maxYOffset: 5
 --- !u!1 &337947580
 GameObject:
   m_ObjectHideFlags: 0
@@ -928,9 +929,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1a83614636c95984ea5cf1c99855bacd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _height: 18
+  _height: 17
   _isLastLevelOrdered: 1
-  _totalBricks: 685
+  _totalBricks: 660
   _radius: 5
   _circumference: 31.415928
   _brickDepth: 0.31

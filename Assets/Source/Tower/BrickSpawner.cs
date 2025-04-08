@@ -187,6 +187,9 @@ public class BrickSpawner : MonoBehaviour
             Vector3 startPosition = position + new Vector3(0, HEIGHT_OFFSET, 0);
             GameObject brickGO = Instantiate(_brickPrefab, startPosition, rotation);
 
+            // Set the RandomSeed parameter of the brickGO material
+            brickGO.GetComponent<Renderer>().material.SetFloat("_RandomSeed", UnityEngine.Random.Range(0.0f, 16.0f)); // Set random seed for the material
+
             // Set initial scale to zero for the animation
             brickGO.transform.localScale = targetScale * 0f; // Start with a small scale
 
