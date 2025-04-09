@@ -14,6 +14,10 @@ public class BrickSpawner : MonoBehaviour
 
     public Button SpawnButton; // Button to trigger the spawning of bricks
 
+    [SerializeField]
+    [Tooltip("The smoke puff prefab to get instantiated on animation end.")]
+    private GameObject _smokePuffPrefab; // Prefab of the smoke puff to instantiate
+
     // Referenc to tower data object
     [SerializeField]
     [Tooltip("The tower data object.")]
@@ -227,6 +231,14 @@ public class BrickSpawner : MonoBehaviour
 
             // Optional: Set target for easier debugging or potential cleanup later
             brickSequence.SetTarget(brickGO);
+            brickSequence.onComplete = () => {
+                //Create a puff of smoke effect at the brick's position
+                Vector3 puffSpawnPosition = new Vector3(position.x,
+                    position.y - 0.2f, position.z);
+
+                Instantiate(_smokePuffPrefab, puffSpawnPosition, Quaternion.identity);
+
+            };
 
             // Update cumulative delay for the next brick's calculation
              if (matrices.Length > 0) // Avoid division by zero if matrices array is empty
