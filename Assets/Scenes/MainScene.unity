@@ -1000,6 +1000,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   SpawnButton: {fileID: 261714438}
+  _smokePuffPrefab: {fileID: 2368577702465514955, guid: 33d076fde0e09ec49b208ca5b45cdd85, type: 3}
   _towerData: {fileID: 897607780}
   _brickPrefab: {fileID: 2597376169622204368, guid: 4c078fceb02b3b64db00b199f64b5bad, type: 3}
 --- !u!1 &1769715228
