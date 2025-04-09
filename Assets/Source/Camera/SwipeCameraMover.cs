@@ -68,6 +68,9 @@ public class SwipeCameraMover : MonoBehaviour
         }
 
         _targetYPosition = new GameObject("TargetYPosition"); // Create a new GameObject to hold the Y position
+        Vector3 newCamPosition = targetCamera.transform.position;
+        newCamPosition.y = maxYPosition + maxYOffset; // Set the camera's Y position to the max Y position
+        targetCamera.transform.position = newCamPosition; // Update camera position
         _targetYPosition.transform.position = targetCamera.transform.position; // Initialize target Y position
     }
 
