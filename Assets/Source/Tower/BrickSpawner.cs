@@ -190,6 +190,8 @@ public class BrickSpawner : MonoBehaviour
             float HEIGHT_OFFSET = 10.0f; // Offset to fall from
             Vector3 startPosition = position + new Vector3(0, HEIGHT_OFFSET, 0);
             GameObject brickGO = Instantiate(_brickPrefab, startPosition, rotation);
+            TrailRenderer trail = brickGO.GetComponent<TrailRenderer>();
+            trail.startWidth = targetScale.x * 0.6f; // Set the start width of the trail
 
             // Set the RandomSeed parameter of the brickGO material
             brickGO.GetComponent<Renderer>().material.SetFloat("_RandomSeed", UnityEngine.Random.Range(0.0f, 16.0f)); // Set random seed for the material
