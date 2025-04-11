@@ -37,10 +37,10 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _FogEnd: 110
-    - _FogStart: 45
+    - _FogEnd: 60
+    - _FogStart: 30
     m_Colors:
-    - _FogColor: {r: 0.677461, g: 0.58219117, b: 0.8396226, a: 0}
-    - _FogColor2: {r: 0.8823529, g: 0.8470588, b: 0.9411765, a: 0}
+    - _FogColor: {r: 0.6301843, g: 0.44495374, b: 0.9339623, a: 0}
+    - _FogColor2: {r: 0.88164717, g: 0.8502581, b: 0.9339623, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

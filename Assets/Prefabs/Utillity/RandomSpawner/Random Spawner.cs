@@ -68,6 +68,11 @@ public class RandomSpawner : MonoBehaviour
             // 6. Apply the scale
             //    We use Vector3.one * scale for uniform scaling on all axes.
             spawnedObject.transform.localScale = Vector3.one * effectiveScale;
+
+            #if UNITY_EDITOR
+            // This prevents the spawned object from being saved with the scene asset
+            spawnedObject.hideFlags = HideFlags.DontSaveInEditor;
+            #endif
         }
     }
 

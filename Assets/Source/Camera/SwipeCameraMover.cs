@@ -1,3 +1,4 @@
+using Unity.VisualScripting;
 using UnityEngine;
 
 /// <summary>
@@ -34,7 +35,7 @@ public class SwipeCameraMover : MonoBehaviour
     [SerializeField] [Tooltip("Optional: Maximum Y offset above maxY the camera can reach.")]
     private float maxYOffset = 0f;
 
-
+    private bool startupAnimation = true;
     private GameObject _targetYPosition;
 
 
@@ -70,11 +71,48 @@ public class SwipeCameraMover : MonoBehaviour
         _targetYPosition = new GameObject("TargetYPosition"); // Create a new GameObject to hold the Y position
         Vector3 newCamPosition = targetCamera.transform.position;
         newCamPosition.y = maxYPosition + maxYOffset; // Set the camera's Y position to the max Y position
+        _targetYPosition.transform.position = newCamPosition; // Initialize target Y position
+
+        newCamPosition.y = minYPosition; // Set the camera's Y position to the min Y position
         targetCamera.transform.position = newCamPosition; // Update camera position
-        _targetYPosition.transform.position = targetCamera.transform.position; // Initialize target Y position
+
+
+
     }
 
     void Update()
+    {
+     if(startupAnimation)
+        {
+            StartupUpdate(); // Call the startup update method
+        }
+        else
+        {
+            MainUpdate(); // Call the main update method
+        }
+    }
+    void StartupUpdate()
+    {
+        // Slowly move the camera to the target Y position
+        Vector3 targetPosition = _targetYPosition.transform.position;
+        targetPosition.x = targetCamera.transform.position.x; // Keep the X position unchanged
+        targetPosition.z = targetCamera.transform.position.z; // Keep the Z position unchanged
+        targetCamera.transform.position = Vector3.Lerp(targetCamera.transform.position, targetPosition, Time.deltaTime * moveSpeed); // Smoothly move to the new position
+        // Check if the camera has reached the target position
+        if (Vector3.Distance(targetCamera.transform.position, targetPosition) < 0.1f)
+        {
+            // If the camera is close enough to the target position, transition to the main update loop
+            TransitionToMainUpdate();
+        }
+    }
+
+    void TransitionToMainUpdate()
+    {
+        // Transition from startup animation to main update loop
+        startupAnimation = false;
+
+    }
+    void MainUpdate()
     {
         // Ensure we have a target and camera before proceeding
         if (targetObject == null || targetCamera == null) return;
