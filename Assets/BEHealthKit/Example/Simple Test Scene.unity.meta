@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 20fddc9ab96624e9ca421b5ab81bb24b
+DefaultImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 39962
+  packageName: BEHealthKit
+  packageVersion: 1.16.3
+  assetPath: Assets/BEHealthKit/Example/Simple Test Scene.unity
+  uploadId: 717742

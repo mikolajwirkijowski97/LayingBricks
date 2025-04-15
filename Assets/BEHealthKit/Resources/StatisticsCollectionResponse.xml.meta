@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 249b3fe61d9bb4815ac3c77ee23f5b0a
+TextScriptImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 39962
+  packageName: BEHealthKit
+  packageVersion: 1.16.3
+  assetPath: Assets/BEHealthKit/Resources/StatisticsCollectionResponse.xml
+  uploadId: 717742

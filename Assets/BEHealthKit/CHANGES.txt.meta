@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: e6363ecd7301542ada258ca9689cac49
+timeCreated: 1457240431
+licenseType: Store
+TextScriptImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 39962
+  packageName: BEHealthKit
+  packageVersion: 1.16.3
+  assetPath: Assets/BEHealthKit/CHANGES.txt
+  uploadId: 717742
