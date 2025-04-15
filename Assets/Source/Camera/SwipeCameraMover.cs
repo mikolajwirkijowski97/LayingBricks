@@ -45,8 +45,8 @@ public class SwipeCameraMover : MonoBehaviour
         TowerGeometryGenerator towerGeometryGenerator = new TowerGeometryGenerator(tower);
         if (towerGeometryGenerator != null)
         {
-            maxYPosition = towerGeometryGenerator.GetTopLevelHeight(); // Set max Y position based on tower height
-            Debug.Log("Max canera Y Position: " + maxYPosition);
+            maxYPosition = towerGeometryGenerator.GetTopLevelHeight() + maxYOffset; // Set max Y position based on tower height
+            Debug.Log("Max camera Y Position: " + maxYPosition);
         }
         // Default to the main camera if none is assigned
         if (targetCamera == null)
@@ -68,9 +68,13 @@ public class SwipeCameraMover : MonoBehaviour
             return; // Stop execution if no target for rotation
         }
 
+        if (maxYPosition < minYPosition) {
+            minYPosition = maxYPosition; // Ensure min Y position is not greater than max Y position
+            Debug.LogWarning("SwipeCameraMover: minYPosition is greater than maxYPosition. Setting minYPosition to maxYPosition.", this);
+        }
         _targetYPosition = new GameObject("TargetYPosition"); // Create a new GameObject to hold the Y position
         Vector3 newCamPosition = targetCamera.transform.position;
-        newCamPosition.y = maxYPosition + maxYOffset; // Set the camera's Y position to the max Y position
+        newCamPosition.y = maxYPosition; // Set the camera's Y position to the max Y position
         _targetYPosition.transform.position = newCamPosition; // Initialize target Y position
 
         newCamPosition.y = minYPosition; // Set the camera's Y position to the min Y position
@@ -146,7 +150,7 @@ public class SwipeCameraMover : MonoBehaviour
                 if (clampYPosition)
                 {
                     Vector3 currentPosition = _targetYPosition.transform.position;
-                    currentPosition.y = Mathf.Clamp(currentPosition.y, minYPosition, maxYPosition + maxYOffset); // Clamp Y position
+                    currentPosition.y = Mathf.Clamp(currentPosition.y, minYPosition, maxYPosition); // Clamp Y position
                     _targetYPosition.transform.position = currentPosition;
                 }
             }
