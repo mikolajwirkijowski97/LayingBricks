@@ -119,7 +119,7 @@ public class BrickSpawner : MonoBehaviour
         int bricksOnLastLevel = TowerData.GetBricksOnLastLevel(); // Get the number of bricks on the last level
         int startingLevel = TowerData.Height; // Get the starting level of the tower
         TowerData.AddBricks(count); // Update the total number of bricks in the tower
-
+        
         List<Matrix4x4> newBricksTransforms = new List<Matrix4x4>(); // Initialize the list for new bricks transforms
         if(bricksMissingOnLast > 0)
         {
@@ -142,8 +142,14 @@ public class BrickSpawner : MonoBehaviour
             int level = startingLevel + fullLevelsToAdd; // Get the current level of the tower
             newBricksTransforms.AddRange(_geometryGenerator.GetOrGenerateLevelMatrices(level).Take(remainingBricks)); // Get the transforms for the new bricks
         }
-
-
+        // Debug log all used parameters that havent yet been logged
+        Debug.Log($"Bricks to add: {count}", this);
+        Debug.Log($"Bricks missing on last level: {bricksMissingOnLast}", this);
+        Debug.Log($"Bricks on last level: {bricksOnLastLevel}", this);
+        Debug.Log($"Starting level: {startingLevel}", this);
+        Debug.Log($"Full levels to add: {fullLevelsToAdd}", this);
+        Debug.Log($"Remaining bricks to add: {remainingBricks}", this);
+        Debug.Log($"New bricks transforms count: {newBricksTransforms.Count}", this);
         if (newBricksTransforms != null && newBricksTransforms.Any())
         {
             CreateAnimatedBricks(newBricksTransforms.ToArray()); // Create animated bricks using the transforms
@@ -178,6 +184,7 @@ public class BrickSpawner : MonoBehaviour
             // Extract the position and rotation from the matrix
             Vector3 position = matrix.GetColumn(3);
             Quaternion rotation = Quaternion.LookRotation(matrix.GetColumn(2), matrix.GetColumn(1));
+            
 
             // Extract the target scale from the matrix
             Vector3 targetScale = new Vector3(

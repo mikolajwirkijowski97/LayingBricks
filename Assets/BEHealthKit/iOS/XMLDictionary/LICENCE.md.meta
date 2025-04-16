@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: ce89a10451b01424aa90999d5ebe7e74
+timeCreated: 1427589548
+licenseType: Store
+DefaultImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 39962
+  packageName: BEHealthKit
+  packageVersion: 1.16.3
+  assetPath: Assets/BEHealthKit/iOS/XMLDictionary/LICENCE.md
+  uploadId: 717742

@@ -374,16 +374,33 @@ public class Tower : MonoBehaviour
          }
     }
 
-    /// --- Public Methods ---
-    /// <summary>
-    /// Returns how many bricks are on the last level of the tower.
-    /// </summary>
-    /// <returns>Number of bricks on the last level.</returns>
-    public int GetBricksOnLastLevel()
+/// <summary>
+/// Returns how many bricks are on the last level of the tower.
+/// </summary>
+/// <returns>Number of bricks on the last level.</returns>
+public int GetBricksOnLastLevel()
+{
+    // Log all variables used in the calculation for debugging
+    Debug.Log($"Total Bricks: {_totalBricks}, Bricks Per Level: {_bricksPerLevel}");
+    Debug.Log($"Height: {_height}"); // Keep logging for context
+
+
+    // If there are no bricks in total, there are 0 bricks on the last level.
+    if (_totalBricks == 0)
     {
-        return _totalBricks % _bricksPerLevel == 0 ? _bricksPerLevel : _totalBricks % _bricksPerLevel;
+        Debug.Log("TotalBricks is 0, returning 0 bricks on last level.");
+        return 0;
     }
 
+    int remainder = _totalBricks % _bricksPerLevel;
+    Debug.Log($"Total Bricks % Bricks Per Level: {remainder}");
+
+    // If remainder is 0, it means the last level is full (contains _bricksPerLevel bricks).
+    // Otherwise, the last level contains 'remainder' bricks.
+    int result = (remainder == 0) ? _bricksPerLevel : remainder;
+    Debug.Log($"Calculated bricks on last level: {result}");
+    return result;
+}
 /// <summary>
 /// Updates the count of bricks and height and all other parameters of the tower.
 /// </summary>

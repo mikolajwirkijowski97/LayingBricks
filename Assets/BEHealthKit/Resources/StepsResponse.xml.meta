@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 65c47124b14654bf7b7363dcd34bc778
+TextScriptImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 39962
+  packageName: BEHealthKit
+  packageVersion: 1.16.3
+  assetPath: Assets/BEHealthKit/Resources/StepsResponse.xml
+  uploadId: 717742

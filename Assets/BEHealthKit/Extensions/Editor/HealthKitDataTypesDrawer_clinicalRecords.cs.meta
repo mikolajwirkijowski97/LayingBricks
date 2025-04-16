@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: adc38737ba7a94974a47e3315a5c9399
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 39962
+  packageName: BEHealthKit
+  packageVersion: 1.16.3
+  assetPath: Assets/BEHealthKit/Extensions/Editor/HealthKitDataTypesDrawer_clinicalRecords.cs
+  uploadId: 717742

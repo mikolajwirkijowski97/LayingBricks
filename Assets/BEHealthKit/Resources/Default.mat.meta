@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: bc056e6c551694f38a1aaae7a649d322
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 39962
+  packageName: BEHealthKit
+  packageVersion: 1.16.3
+  assetPath: Assets/BEHealthKit/Resources/Default.mat
+  uploadId: 717742

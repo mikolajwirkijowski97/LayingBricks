@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: c050c1eb4575a42f9955565e3e1e7c62
+TextScriptImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 39962
+  packageName: BEHealthKit
+  packageVersion: 1.16.3
+  assetPath: Assets/BEHealthKit/Resources/WorkoutResponse.xml
+  uploadId: 717742

@@ -3251,8 +3251,8 @@
     "m_ObjectId": "8c81b7f2f7a24d6c8b7a25a65c962275",
     "m_Title": "Variable + Instance ID",
     "m_Position": {
-        "x": -2480.000244140625,
-        "y": 657.000244140625
+        "x": -2480.0,
+        "y": 657.0
     }
 }
 
@@ -3494,8 +3494,8 @@
     "m_ObjectId": "a274a2da50c54eaba3e09c99f7b866b3",
     "m_Title": "45 degree detection",
     "m_Position": {
-        "x": -3566.000244140625,
-        "y": -204.9998779296875
+        "x": -3566.0,
+        "y": -205.0
     }
 }
 
@@ -3696,7 +3696,7 @@
     "m_ShaderOutputName": "B",
     "m_StageCapability": 3,
     "m_Value": {
-        "x": 1.5,
+        "x": 0.800000011920929,
         "y": 2.0,
         "z": 2.0,
         "w": 2.0
@@ -4071,7 +4071,7 @@
     "m_Title": "RandomShiftedUV",
     "m_Position": {
         "x": -1905.0,
-        "y": 199.00025939941407
+        "y": 199.0
     }
 }
 

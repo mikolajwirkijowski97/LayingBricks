@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 30fd033d4602745c1b5dbd2268387f2b
+timeCreated: 1476924095
+licenseType: Store
+TextScriptImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 39962
+  packageName: BEHealthKit
+  packageVersion: 1.16.3
+  assetPath: Assets/BEHealthKit/README.txt
+  uploadId: 717742

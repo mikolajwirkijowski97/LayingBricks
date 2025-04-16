@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: d2415294b33c04128b3599dd614dac6b
+TextScriptImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 39962
+  packageName: BEHealthKit
+  packageVersion: 1.16.3
+  assetPath: Assets/BEHealthKit/Resources/HealthDocumentResponse.xml
+  uploadId: 717742

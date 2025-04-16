@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: cf2be9da2fa594c5586590252c5dd629
+timeCreated: 1474319845
+licenseType: Store
+DefaultImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 39962
+  packageName: BEHealthKit
+  packageVersion: 1.16.3
+  assetPath: Assets/BEHealthKit/Example/Full Test Scene.unity
+  uploadId: 717742
