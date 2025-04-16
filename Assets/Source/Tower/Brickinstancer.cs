@@ -149,7 +149,18 @@ public class TowerInstancedRenderer : MonoBehaviour
 
         foreach (Matrix4x4[] batchToDraw in _persistentBatches)
         {
-            if (batchToDraw != null && batchToDraw.Length > 0)
+            // If the last transform in batchToDraw is further than maxDistance, skip drawing
+            // This is a simple optimization to avoid drawing far away bricks
+            float maxDistance = 100f; // Example maximum distance
+            Vector3 cameraPosition = Camera.main.transform.position;
+            Vector3 lastBrickPosition = batchToDraw[batchToDraw.Length - 1].GetColumn(3);
+            if (Vector3.Distance(cameraPosition, lastBrickPosition) > maxDistance)
+            {
+                Debug.Log($"Skipping draw call for batch at distance {Vector3.Distance(cameraPosition, lastBrickPosition)} > {maxDistance}");
+                continue;
+            }
+
+            if (batchToDraw != null && batchToDraw.Length > 0 )
             {
                 Graphics.DrawMeshInstanced(_brickMesh, 0, _brickMaterial, batchToDraw, batchToDraw.Length);
             }

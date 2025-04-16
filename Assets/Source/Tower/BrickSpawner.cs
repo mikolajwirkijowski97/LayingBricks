@@ -184,6 +184,7 @@ public class BrickSpawner : MonoBehaviour
             // Extract the position and rotation from the matrix
             Vector3 position = matrix.GetColumn(3);
             Quaternion rotation = Quaternion.LookRotation(matrix.GetColumn(2), matrix.GetColumn(1));
+            
 
             // Extract the target scale from the matrix
             Vector3 targetScale = new Vector3(
