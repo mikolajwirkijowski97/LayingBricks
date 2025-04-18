@@ -112,6 +112,7 @@ public class Tower : MonoBehaviour
     public int TotalBricks {
         get { return _totalBricks; }
         set {
+            Debug.Log("Setting TotalBricks to: " + value); // Debug log for value being set
             int clampedValue = Mathf.Max(0, value); // Enforce minimum in setter too
             _totalBricks = clampedValue; // Update total bricks
             Height = clampedValue / _bricksPerLevel;
