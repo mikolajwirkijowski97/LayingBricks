@@ -62,7 +62,6 @@ public class BrickSpawner : MonoBehaviour
     private GameObject _brickPrefab; // Prefab of the brick to spawn
 
     private Queue<AnimatedBrick> _animationQueue = new Queue<AnimatedBrick>(); // Queue for brick falling animations
-    private List<GameObject> _bricks = new List<GameObject>(); // List of spawned bricks
     
     public GameObject BrickPrefab
     {
@@ -90,6 +89,11 @@ public class BrickSpawner : MonoBehaviour
          {
               _geometryGenerator = null; // Tower is null, no generator
          }
+    }
+
+    void Awake()
+    {
+     TowerData.OnParametersChanged += InitializeGeometryGenerator; // Subscribe to tower data changes   
     }
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
