@@ -108,12 +108,13 @@ public class BrickSpawner : MonoBehaviour
         
     }
 
-    void Add10Bricks()
+    public void Add10Bricks()
     {
-        int bricksToAdd = 21; // Number of bricks to add
+        int bricksToAdd = 10; // Number of bricks to add
         AddBricks(bricksToAdd); // Call the method to add bricks
     }
-    void AddBricks(int count){
+
+    public void AddBricks(int count){
         Debug.Log($"Adding {count} bricks to the tower.", this);
         Debug.Log($"Tower height: {TowerData.Height}", this);
         Debug.Log($"Tower total bricks: {TowerData.TotalBricks}", this);
