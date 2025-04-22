@@ -9,6 +9,8 @@ using UnityEngine;
 /// </summary>
 public class SwipeCameraMover : MonoBehaviour
 {
+
+    
     [Header("Target Object")]
     [Tooltip("The object the camera should orbit around horizontally. Assign this in the Inspector.")]
     [SerializeField] private Transform targetObject;
@@ -44,6 +46,8 @@ public class SwipeCameraMover : MonoBehaviour
     [SerializeField] [Tooltip("Optional: Maximum Y offset above calculated tower height.")]
     private float maxYOffset = 0f;
 
+    [SerializeField] private Tower towerData;
+
     // Internal State
     private bool startupAnimation = true;
     private GameObject _targetYPositionObject; // Renamed for clarity
@@ -53,10 +57,15 @@ public class SwipeCameraMover : MonoBehaviour
 
     void Awake()
     {
-        // --- Existing Awake Logic ---
-        Tower tower = FindFirstObjectByType<Tower>();
-        if (tower != null) {
-            TowerGeometryGenerator towerGeometryGenerator = new TowerGeometryGenerator(tower); // Assuming constructor exists
+        towerData.OnParametersChanged += UpdateInternals; // Subscribe to tower data changes
+        
+        UpdateInternals(); // Initial setup
+
+    }
+
+    void UpdateInternals() {
+        if (towerData != null) {
+            TowerGeometryGenerator towerGeometryGenerator = new TowerGeometryGenerator(towerData); // Assuming constructor exists
             if (towerGeometryGenerator != null)
             {
                 maxYPosition = towerGeometryGenerator.GetTopLevelHeight() + maxYOffset;
@@ -129,8 +138,6 @@ public class SwipeCameraMover : MonoBehaviour
             pos.y = Mathf.Clamp(pos.y, minYPosition, maxYPosition);
            _targetYPositionObject.transform.position = pos;
         }
-
-
     }
 
     void Update()
