@@ -35,7 +35,7 @@ public class Game : MonoBehaviour
                 // Handle the failure case
             }
         }); // Request authorization for HealthKit data types
-        
+
     }
 
     // Update is called once per frame
@@ -46,6 +46,7 @@ public class Game : MonoBehaviour
 
     void InitializeInstancedTower()
     {
+        Debug.Log("Initializing Instanced Tower Auth Callback...");
         towerInstancedRenderer.TurnOn();
 
     }

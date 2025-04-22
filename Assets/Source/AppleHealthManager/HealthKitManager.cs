@@ -116,6 +116,5 @@ public class HealthKitManager : MonoBehaviour
     // You could call this in Start() to run automatically, or link it to a button's onClick event.
     void Start()
     {
-        GetTotalDistanceEver();
     }
 }
