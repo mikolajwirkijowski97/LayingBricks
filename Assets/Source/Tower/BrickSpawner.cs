@@ -74,7 +74,7 @@ public class BrickSpawner : MonoBehaviour
 
     private void InitializeGeometryGenerator()
     {
-
+        Debug.Log("ReInitializing Geometry Generator in BrickSpawner", this);
          if (_towerData != null)
          {
              try {

@@ -116,10 +116,8 @@ public class Tower : MonoBehaviour
             int clampedValue = Mathf.Max(0, value); // Enforce minimum in setter too
             _totalBricks = clampedValue; // Update total bricks
             Height = clampedValue / _bricksPerLevel;
-            if (_totalBricks != clampedValue) {
-                RecalculateHeight(); // Update dependent value
-                OnParametersChanged?.Invoke();
-            }
+            RecalculateHeight(); // Update dependent value
+            OnParametersChanged?.Invoke();
         }
     }
 
