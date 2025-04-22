@@ -3110,7 +3110,7 @@ MonoBehaviour:
   targetCamera: {fileID: 330585545}
   moveSensitivity: 5
   moveSpeed: 10
-  rotationSensitivity: 20
+  rotationSensitivity: 3
   zoomSensitivity: 0.02
   minZoomDistance: 5
   maxZoomDistance: 50
