@@ -29,11 +29,11 @@ public class Tower : MonoBehaviour
     [SerializeField]
     [Tooltip("The total amount of bricks in the tower. Other values are derived from this.")]
     [Range(0,1000000)]
-    private int _totalBricks = 1000; 
+    private int _totalBricks = 0; 
 
     [SerializeField]
     [Tooltip("Radius of the tower's cylindrical shape. Must be positive.")]
-    [Min(0.1f)] // Enforce minimum value directly in the inspector
+    [Min(1f)] // Enforce minimum value directly in the inspector
     private float _radius = 5.0f;
 
     [SerializeField]
@@ -60,13 +60,13 @@ public class Tower : MonoBehaviour
     [SerializeField]
     [Tooltip("Number of bricks arranged horizontally around each level. Must be at least 1.")]
     [Min(1)] // Enforce minimum value directly in the inspector
-    private int _bricksPerLevel = 8;
+    private int _bricksPerLevel = 40;
 
     [Header("Randomization")]
 
     [SerializeField]
     [Tooltip("Seed for the random number generator used for deterministic tower generation.")]
-    private int _seed;
+    private int _seed = 69; // Default seed for randomization
 
     [SerializeField]
     [Tooltip("Maximum percentage variation applied to brick widths (0 = uniform width, 0.9 = high variation).")]

@@ -33,9 +33,10 @@ public class TowerInstancedRenderer : MonoBehaviour
     // Stores the prepared batches of matrices ready for rendering
     private readonly List<Matrix4x4[]> _persistentBatches = new List<Matrix4x4[]>();
     private bool _needsBatchRebuild = true; // Separate flag for batching, triggered by generator being dirty
-
+    
     // --- Properties ---
 
+    public bool isOn = false; // Flag to control rendering state
     public Tower Tower
     {
         get { return _tower; }
@@ -134,7 +135,9 @@ public class TowerInstancedRenderer : MonoBehaviour
     }
 
     void Update()
-    {
+    {   
+        if (!isOn) return; // Skip rendering if not enabled
+
         // Basic checks for essential components
         if (_geometryGenerator == null || _brickMesh == null || _brickMaterial == null) return;
 
@@ -233,6 +236,24 @@ public class TowerInstancedRenderer : MonoBehaviour
     {
          _persistentBatches.Clear();
          _needsBatchRebuild = true; // Ensure rebuild is triggered next update
+    }
+
+    public void TurnOn()
+    {
+        ClearBatches(); // Clear any existing batches on start
+        // Ensure the geometry generator is initialized and caches are rebuilt
+        if (_geometryGenerator != null)
+        {
+            _geometryGenerator.RebuildCachesIfNeeded();
+            RebuildBatchesIfNeeded(); // Rebuild batches after cache update
+        }
+        isOn = true;
+    }
+
+    public void TurnOff()
+    {
+        isOn = false; // Disable rendering
+        ClearBatches(); // Clear batches to free up resources
     }
 
 

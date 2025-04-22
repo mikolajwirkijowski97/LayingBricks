@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using System;
 using BeliefEngine.HealthKit;
-public class DistanceGetter : MonoBehaviour
+public class HealthKitManager : MonoBehaviour
 {
     [Header("BEHealthKit References")]
     [Tooltip("Assign the GameObject with the HealthStore component.")]
@@ -17,6 +17,11 @@ public class DistanceGetter : MonoBehaviour
 
     [Tooltip("Event triggered if an error occurs during the process.")]
     public UnityEvent<string> OnErrorFetchingDistance;
+
+    // Public Properties for external access
+    public HealthStore HealthStore => healthStore;
+    public HealthKitDataTypes DataTypes => dataTypes;
+
 
     // Public method to initiate the process
     public void GetTotalDistanceEver()
