@@ -7,7 +7,7 @@ using UnityEditor;
 
 /// <summary>
 /// Spawns objects chosen randomly from a list within a specified volume (Arc, Circle Area, Cylinder, Hollow Cylinder).
-/// Allows scaling, rotation options, and updates dynamically in the editor based on the 'Update Automatically' flag.
+/// Allows scaling, rotation options, and updates dynamically in the editor.
 /// </summary>
 [ExecuteInEditMode]
 public class VolumeSpawner : MonoBehaviour
@@ -23,10 +23,6 @@ public class VolumeSpawner : MonoBehaviour
 
     // --- Fields ---
     [Header("Spawning Setup")]
-    [SerializeField]
-    [Tooltip("Enable this to automatically regenerate objects when parameters change in the editor. Disable before saving/committing to prevent unwanted scene changes.")]
-    private bool updateAutomatically = false; // Renamed from doUpdate for clarity
-
     [SerializeField]
     [Tooltip("List of prefabs to choose from when spawning. One will be picked randomly for each spot.")]
     private List<GameObject> prefabsToSpawn = new List<GameObject>();
@@ -100,12 +96,6 @@ public class VolumeSpawner : MonoBehaviour
         if (numberOfObjects < 1) numberOfObjects = 1;
 
 
-        // Check the flag before attempting to spawn automatically
-        if (!updateAutomatically)
-        {
-            return; // Don't spawn if automatic updates are disabled
-        }
-
         // Prevent running spawn logic during play mode, while already spawning,
         // or if the object isn't part of a valid scene (e.g., prefab asset view).
         if (Application.isPlaying || isSpawning || !gameObject.scene.IsValid())
@@ -115,18 +105,15 @@ public class VolumeSpawner : MonoBehaviour
 
         // Schedule the update for the next editor frame to avoid potential issues.
         #if UNITY_EDITOR
-        // Ensure previous calls are cleared before scheduling a new one to avoid stacking updates
-        EditorApplication.delayCall -= DelayedUpdateSpawn;
-        EditorApplication.delayCall += DelayedUpdateSpawn;
+        EditorApplication.delayCall -= DelayedUpdateSpawn; // Clear previous pending calls
+        EditorApplication.delayCall += DelayedUpdateSpawn; // Schedule the update
         #endif
     }
 
-    // This method now contains the core spawning logic, called via delayCall from OnValidate
     void DelayedUpdateSpawn()
     {
         // Ensure component/GameObject still exists before proceeding
-        // Also check the flag again, in case it was disabled between OnValidate and the delayed call
-        if (this == null || gameObject == null || !gameObject.scene.IsValid() || !updateAutomatically || isSpawning) return;
+        if (this == null || gameObject == null || !gameObject.scene.IsValid()) return;
 
         // --- Cleanup First ---
         ClearChildren();
@@ -147,10 +134,6 @@ public class VolumeSpawner : MonoBehaviour
 
         // --- Spawning ---
         isSpawning = true;
-        #if UNITY_EDITOR
-        // Register root object for Undo, so the whole generation can be undone
-        Undo.RegisterCompleteObjectUndo(this, "Update Spawned Objects");
-        #endif
         try
         {
             // Convert input degrees to radians for calculations
@@ -215,92 +198,93 @@ public class VolumeSpawner : MonoBehaviour
 
                     if (lookDirection != Vector3.zero) // Avoid LookRotation error if direction is zero
                     {
-                       // Apply parent rotation offset
-                       spawnRotation = Quaternion.LookRotation(lookDirection) * Quaternion.Inverse(transform.rotation);
-                       spawnRotation = transform.rotation * Quaternion.LookRotation(lookDirection);
-                    }
-                    else {
-                        spawnRotation = transform.rotation; // Fallback to parent rotation if look direction is zero
+                       spawnRotation = Quaternion.LookRotation(lookDirection);
                     }
                 }
                 else
                 {
-                    // Keep parent's rotation if not randomizing or facing outwards
-                    spawnRotation = transform.rotation;
+                    // Keep prefab's default rotation if not randomizing or facing outwards
+                    spawnRotation = prefabToUse.transform.rotation;
                 }
 
                 // --- Instantiate, Scale & Parent ---
-                #if UNITY_EDITOR
-                 // Use PrefabUtility.InstantiatePrefab for better prefab connection in editor
-                GameObject spawnedObject = (GameObject)PrefabUtility.InstantiatePrefab(prefabToUse, transform);
-                spawnedObject.transform.position = spawnPosition;
-                spawnedObject.transform.rotation = spawnRotation; // Apply calculated world rotation
-                Undo.RegisterCreatedObjectUndo(spawnedObject, $"Spawn {spawnShape} Object");
-
-                #else
-                // Runtime instantiation
                 GameObject spawnedObject = Instantiate(prefabToUse, spawnPosition, spawnRotation, transform);
-                #endif
-
                 spawnedObject.name = $"{prefabToUse.name}_{i}";
-                // Scale relatively to the prefab's original scale AFTER parenting
                 spawnedObject.transform.localScale = prefabToUse.transform.localScale * scaleFactor;
 
+                #if UNITY_EDITOR
+                Undo.RegisterCreatedObjectUndo(spawnedObject, $"Spawn {spawnShape} Object");
+                #endif
             }
         }
         finally
         {
             isSpawning = false; // Reset the flag
-            #if UNITY_EDITOR
-            // Ensure scene is marked dirty so changes are saved
-             if (!Application.isPlaying)
-             {
-                 UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(gameObject.scene);
-             }
-            #endif
         }
     }
 
     // --- Position Calculation Helpers ---
-    // These helpers now return world positions directly, considering parent transform
 
-     Vector3 CalculatePositionOnArcEdge(float startRad, float arcRad, int index)
+    Vector3 CalculatePositionOnArcEdge(float startRad, float arcRad, int index)
     {
         float currentAngleRad;
-        float localArcDegrees = arcDegrees; // Use the serialized field value for logic
+        // Handle edge case: If only one object, place it exactly at the start angle.
+        if (numberOfObjects == 1)
+        {
+            currentAngleRad = startRad;
+        }
+        // Handle edge case: If arc is effectively zero, place all objects at start angle.
+        else if (arcDegrees <= 0.001f)
+        {
+             currentAngleRad = startRad;
+        }
+        // Handle edge case: If arc is a full circle (or very close to it)
+        else if (arcDegrees >= 359.999f)
+        {
+            // Standard full circle distribution, offset by start angle
+            currentAngleRad = startRad + index * (Mathf.PI * 2f / numberOfObjects);
+        }
+        // Standard case: Distribute objects along the specified arc
+        else
+        {
+            // Divide the arc into (N-1) segments to place objects at start and end inclusively.
+            float angleStepRad = arcRad / (numberOfObjects - 1);
+            currentAngleRad = startRad + index * angleStepRad;
+        }
 
-        if (numberOfObjects == 1) { currentAngleRad = startRad; }
-        else if (localArcDegrees <= 0.001f) { currentAngleRad = startRad; }
-        else if (localArcDegrees >= 359.999f) { currentAngleRad = startRad + index * (Mathf.PI * 2f / numberOfObjects); }
-        else { float angleStepRad = arcRad / (numberOfObjects - 1); currentAngleRad = startRad + index * angleStepRad; }
-
-        Vector3 localDirection = new Vector3(Mathf.Cos(currentAngleRad), 0, Mathf.Sin(currentAngleRad));
-        Vector3 worldOffset = transform.rotation * (localDirection * outerRadius);
-        return transform.position + worldOffset;
+        Vector3 direction = new Vector3(Mathf.Cos(currentAngleRad), 0, Mathf.Sin(currentAngleRad));
+        return transform.position + direction * outerRadius;
     }
 
     Vector3 CalculatePositionInCircleArea(float startRad, float endRad)
     {
+        // Random angle within the arc/sector
         float randomAngleRad = Random.Range(startRad, endRad);
-        float randomRadius = outerRadius * Mathf.Sqrt(Random.value);
-        Vector3 localDirection = new Vector3(Mathf.Cos(randomAngleRad), 0, Mathf.Sin(randomAngleRad));
-        Vector3 worldOffset = transform.rotation * (localDirection * randomRadius);
-        return transform.position + worldOffset;
+
+        // Random radius - Use Sqrt for uniform *area* distribution
+        float randomRadius = outerRadius * Mathf.Sqrt(Random.value); // Random.value is 0..1
+
+        Vector3 direction = new Vector3(Mathf.Cos(randomAngleRad), 0, Mathf.Sin(randomAngleRad));
+        return transform.position + direction * randomRadius;
     }
 
      Vector3 CalculatePositionInCylinder(float startRad, float endRad, float minRadius, float maxRadius)
     {
+        // Random angle within the arc/sector
         float randomAngleRad = Random.Range(startRad, endRad);
+
+        // Random radius within the specified range (minRadius to maxRadius)
+        // Use formula derived from uniform area distribution for annulus / circle segment
+        // r = sqrt( R_inner^2 + t * (R_outer^2 - R_inner^2) ) where t is uniform 0..1
         float minRadiusSqr = minRadius * minRadius;
         float maxRadiusSqr = maxRadius * maxRadius;
         float randomRadius = Mathf.Sqrt(minRadiusSqr + Random.value * (maxRadiusSqr - minRadiusSqr));
+
+        // Random height within the cylinder bounds
         float randomY = Random.Range(-height / 2f, height / 2f);
 
-        Vector3 localDirection = new Vector3(Mathf.Cos(randomAngleRad), 0, Mathf.Sin(randomAngleRad));
-        // Combine horizontal offset and vertical offset in local space before rotating
-        Vector3 localOffset = (localDirection * randomRadius) + (Vector3.up * randomY);
-        Vector3 worldOffset = transform.rotation * localOffset;
-        return transform.position + worldOffset;
+        Vector3 direction = new Vector3(Mathf.Cos(randomAngleRad), 0, Mathf.Sin(randomAngleRad));
+        return transform.position + direction * randomRadius + new Vector3(0, randomY, 0);
     }
 
 
@@ -309,104 +293,66 @@ public class VolumeSpawner : MonoBehaviour
     /// </summary>
     void ClearChildren()
     {
-        // Record Undo for the clearing action itself when called from DelayedUpdateSpawn
-        // No need to register the root object again here, as DelayedUpdateSpawn already does.
         for (int i = transform.childCount - 1; i >= 0; i--)
         {
             GameObject child = transform.GetChild(i).gameObject;
             #if UNITY_EDITOR
-            // Record destruction of each child for Undo
             Undo.DestroyObjectImmediate(child);
             #else
             DestroyImmediate(child); // Use DestroyImmediate for editor cleanup outside play mode
             #endif
         }
-         #if UNITY_EDITOR
-         // Scene dirty marking is handled in DelayedUpdateSpawn after potential regeneration
-        #endif
     }
 
-     /// <summary>
+    /// <summary>
     /// Draw gizmos in the scene view when the object is selected.
     /// </summary>
     void OnDrawGizmosSelected()
     {
-        // Clamp values used in Gizmos drawing locally to avoid issues if OnValidate hasn't run yet
-        float validOuterRadius = Mathf.Max(0f, outerRadius);
-        float validInnerRadius = Mathf.Clamp(innerRadius, 0f, validOuterRadius);
-        float validHeight = Mathf.Max(0.01f, height);
-        float validArcDegrees = Mathf.Clamp(arcDegrees, 0f, 360f);
-
-        if (validOuterRadius <= 0 && spawnShape != SpawnShape.CircleArcEdge) return; // Need radius for most shapes
-        if (validOuterRadius <= 0 && spawnShape == SpawnShape.CircleArcEdge && numberOfObjects > 0) {} // Allow zero radius for arc edge if spawning happens
-        else if (validOuterRadius <= 0) return;
+        if (outerRadius <= 0 && spawnShape != SpawnShape.CircleArcEdge) return; // Need radius for most shapes
+        if (outerRadius <= 0 && spawnShape == SpawnShape.CircleArcEdge && numberOfObjects > 0) {} // Allow zero radius for arc edge if spawning happens
+        else if (outerRadius <= 0) return;
 
 
         Vector3 center = transform.position;
-        Quaternion rotation = transform.rotation; // Use spawner's rotation
         float startAngleRad = startAngleDegrees * Mathf.Deg2Rad;
-        float arcRad = validArcDegrees * Mathf.Deg2Rad;
+        float arcRad = arcDegrees * Mathf.Deg2Rad;
         float endAngleRad = startAngleRad + arcRad;
-        int arcSegments = Mathf.Max(2, Mathf.CeilToInt(60 * (validArcDegrees / 360f)));
+        int arcSegments = Mathf.Max(2, Mathf.CeilToInt(60 * (arcDegrees / 360f)));
 
         // Store current Handles matrix and color
         #if UNITY_EDITOR
         Color defaultHandlesColor = Handles.color;
         Matrix4x4 defaultMatrix = Handles.matrix;
-        // Set Handles matrix to match object's transform
-        Handles.matrix = Matrix4x4.TRS(center, rotation, Vector3.one);
+        Handles.matrix = Matrix4x4.TRS(center, transform.rotation, Vector3.one); // Apply spawner transform
         #endif
 
         // Draw based on shape
         switch (spawnShape)
         {
             case SpawnShape.CircleArcEdge:
-                // Use Handles for wire arc for consistency and rotation handling
-                #if UNITY_EDITOR
-                Handles.color = Color.yellow;
-                Handles.DrawWireArc(Vector3.zero, Vector3.up, // Position relative to matrix
-                                   new Vector3(Mathf.Cos(startAngleRad), 0, Mathf.Sin(startAngleRad)),
-                                   validArcDegrees, validOuterRadius);
-                 // Draw lines from center to arc start/end for clarity, unless it's a full circle
-                if (validArcDegrees < 359.999f)
-                {
-                    Handles.color = Color.grey;
-                    Handles.DrawLine(Vector3.zero, new Vector3(Mathf.Cos(startAngleRad), 0, Mathf.Sin(startAngleRad)) * validOuterRadius);
-                    Handles.DrawLine(Vector3.zero, new Vector3(Mathf.Cos(endAngleRad), 0, Mathf.Sin(endAngleRad)) * validOuterRadius);
-                }
-                #else // Fallback Gizmos drawing
-                DrawArcGizmoGizmos(center, rotation, startAngleRad, arcRad, validOuterRadius, arcSegments, Color.yellow);
-                #endif
-                DrawSpawnPointMarkersArc(center, rotation, startAngleRad, arcRad, validOuterRadius, Color.cyan); // Use Gizmos for markers
+                DrawArcGizmo(center, startAngleRad, arcRad, outerRadius, arcSegments, Color.yellow);
+                DrawSpawnPointMarkersArc(center, startAngleRad, arcRad, outerRadius, Color.cyan);
                 break;
 
             case SpawnShape.CircleArea:
                  #if UNITY_EDITOR
                  Handles.color = new Color(0.8f, 0.8f, 0.1f, 0.2f); // Semi-transparent yellow
-                 Handles.DrawSolidArc(Vector3.zero, Vector3.up, // Position relative to matrix
+                 Handles.DrawSolidArc(Vector3.zero, Vector3.up, // Use Vector3.zero because matrix handles position
                                      new Vector3(Mathf.Cos(startAngleRad), 0, Mathf.Sin(startAngleRad)),
-                                     validArcDegrees, validOuterRadius);
-                // Draw outline arc
-                Handles.color = Color.yellow;
-                Handles.DrawWireArc(Vector3.zero, Vector3.up, new Vector3(Mathf.Cos(startAngleRad), 0, Mathf.Sin(startAngleRad)), validArcDegrees, validOuterRadius);
-                 // Draw lines from center to arc start/end for clarity, unless it's a full circle
-                if (validArcDegrees < 359.999f)
-                {
-                    Handles.color = Color.grey;
-                    Handles.DrawLine(Vector3.zero, new Vector3(Mathf.Cos(startAngleRad), 0, Mathf.Sin(startAngleRad)) * validOuterRadius);
-                    Handles.DrawLine(Vector3.zero, new Vector3(Mathf.Cos(endAngleRad), 0, Mathf.Sin(endAngleRad)) * validOuterRadius);
-                }
-                 #else // Fallback Gizmos drawing
-                 DrawArcGizmoGizmos(center, rotation, startAngleRad, arcRad, validOuterRadius, arcSegments, Color.yellow);
+                                     arcDegrees, outerRadius);
+                DrawArcGizmo(center, startAngleRad, arcRad, outerRadius, arcSegments, Color.yellow, false); // Draw outline
+                 #else
+                 DrawArcGizmo(center, startAngleRad, arcRad, outerRadius, arcSegments, Color.yellow); // Fallback for no Handles
                  #endif
                 break;
 
             case SpawnShape.CylinderVolume:
-                DrawCylinderGizmo(startAngleRad, arcRad, 0f, validOuterRadius, validHeight, validArcDegrees, arcSegments, Color.blue, new Color(0.1f, 0.1f, 0.8f, 0.1f));
+                DrawCylinderGizmo(center, startAngleRad, arcRad, 0f, outerRadius, height, arcSegments, Color.blue, new Color(0.1f, 0.1f, 0.8f, 0.1f));
                 break;
 
             case SpawnShape.HollowCylinderVolume:
-                 DrawCylinderGizmo(startAngleRad, arcRad, validInnerRadius, validOuterRadius, validHeight, validArcDegrees, arcSegments, Color.green, new Color(0.1f, 0.8f, 0.1f, 0.1f));
+                 DrawCylinderGizmo(center, startAngleRad, arcRad, innerRadius, outerRadius, height, arcSegments, Color.green, new Color(0.1f, 0.8f, 0.1f, 0.1f));
                 break;
         }
 
@@ -417,90 +363,78 @@ public class VolumeSpawner : MonoBehaviour
          #endif
     }
 
-    // --- Gizmo Drawing Helpers --- (Copied from previous version, ensure they are compatible)
+    // --- Gizmo Drawing Helpers ---
 
-    #if !UNITY_EDITOR
-    // Fallback Gizmos drawing for Arc (used when Handles are not available)
-    void DrawArcGizmoGizmos(Vector3 center, Quaternion rotation, float startRad, float arcRad, float radius, int segments, Color color, bool drawCenterLines = true)
+    void DrawArcGizmo(Vector3 center, float startRad, float arcRad, float radius, int segments, Color color, bool drawCenterLines = true)
     {
         if (radius <= 0) return;
         float endRad = startRad + arcRad;
-        float validArcDegrees = arcRad * Mathf.Rad2Deg; // Need degrees for comparison
 
         Gizmos.color = color;
-        Vector3 startDir = new Vector3(Mathf.Cos(startRad), 0, Mathf.Sin(startRad));
-        Vector3 prevPoint = center + rotation * (startDir * radius);
+        Vector3 prevPoint = center + transform.rotation * (new Vector3(Mathf.Cos(startRad), 0, Mathf.Sin(startRad)) * radius);
 
         for (int i = 1; i <= segments; i++)
         {
             float currentRad = Mathf.Lerp(startRad, endRad, (float)i / segments);
-            Vector3 nextPoint = center + rotation * (new Vector3(Mathf.Cos(currentRad), 0, Mathf.Sin(currentRad)) * radius);
+            Vector3 nextPoint = center + transform.rotation * (new Vector3(Mathf.Cos(currentRad), 0, Mathf.Sin(currentRad)) * radius);
             Gizmos.DrawLine(prevPoint, nextPoint);
             prevPoint = nextPoint;
         }
 
         // Draw lines from center to arc start/end for clarity, unless it's a full circle
-        if (drawCenterLines && validArcDegrees < 359.999f)
+        if (drawCenterLines && arcDegrees < 359.999f)
         {
-            Vector3 endDir = new Vector3(Mathf.Cos(endRad), 0, Mathf.Sin(endRad));
             Gizmos.color = Color.grey;
-             Gizmos.DrawLine(center, center + rotation * (startDir * radius));
-             Gizmos.DrawLine(center, center + rotation * (endDir * radius));
+             Gizmos.DrawLine(center, center + transform.rotation * (new Vector3(Mathf.Cos(startRad), 0, Mathf.Sin(startRad)) * radius));
+             Gizmos.DrawLine(center, center + transform.rotation * (new Vector3(Mathf.Cos(endRad), 0, Mathf.Sin(endRad)) * radius));
         }
     }
-    #endif
 
-
-    // Note: This helper now expects angles in radians and degrees separately for clarity
-    void DrawCylinderGizmo(float startRad, float arcRad, float iRadius, float oRadius, float h, float arcDeg, int segments, Color outlineColor, Color volumeColor)
+    void DrawCylinderGizmo(Vector3 center, float startRad, float arcRad, float iRadius, float oRadius, float h, int segments, Color outlineColor, Color volumeColor)
     {
-        // This function relies heavily on Handles, so only implement the Handles version
-        #if UNITY_EDITOR
         float halfHeight = h / 2f;
-        Vector3 topCenter = Vector3.up * halfHeight; // Relative to Handles matrix center (which includes position/rotation)
+        Vector3 topCenter = Vector3.up * halfHeight; // Relative to Handles matrix center
         Vector3 bottomCenter = Vector3.down * halfHeight; // Relative to Handles matrix center
 
+        // Use Handles for drawing arcs and caps
+        #if UNITY_EDITOR
         Handles.color = volumeColor;
         Vector3 arcStartDir = new Vector3(Mathf.Cos(startRad), 0, Mathf.Sin(startRad));
 
-        // Draw solid caps (or sectors) - Outer
+        // Draw solid caps (or sectors)
          if (oRadius > 0) {
-             Handles.DrawSolidArc(topCenter, Vector3.up, arcStartDir, arcDeg, oRadius);
-             Handles.DrawSolidArc(bottomCenter, Vector3.up, arcStartDir, arcDeg, oRadius);
+             Handles.DrawSolidArc(topCenter, Vector3.up, arcStartDir, arcDegrees, oRadius);
+             Handles.DrawSolidArc(bottomCenter, Vector3.up, arcStartDir, arcDegrees, oRadius);
          }
-
-         // If hollow, draw inner caps with clear color to "erase" the inside (visual cue)
+        // If hollow, "erase" the inner part by drawing with background color (or just skip if transparent)
+        // Note: True transparency blending with Handles can be tricky. This gives a visual cue.
          if (iRadius > 0 && iRadius < oRadius) {
-             // Using a very transparent version of the outline color can sometimes look better than Color.clear
-             Color innerCapColor = outlineColor; innerCapColor.a = 0.01f; // Almost clear
-             Handles.color = innerCapColor;
-             Handles.DrawSolidArc(topCenter, Vector3.up, arcStartDir, arcDeg, iRadius);
-             Handles.DrawSolidArc(bottomCenter, Vector3.up, arcStartDir, arcDeg, iRadius);
+             Handles.color = Color.clear; // Or a color that contrasts well if needed
+             Handles.DrawSolidArc(topCenter, Vector3.up, arcStartDir, arcDegrees, iRadius);
+             Handles.DrawSolidArc(bottomCenter, Vector3.up, arcStartDir, arcDegrees, iRadius);
          }
 
 
         Handles.color = outlineColor; // Switch to outline color
          // Draw top and bottom arcs (outer)
         if (oRadius > 0) {
-             Handles.DrawWireArc(topCenter, Vector3.up, arcStartDir, arcDeg, oRadius);
-             Handles.DrawWireArc(bottomCenter, Vector3.up, arcStartDir, arcDeg, oRadius);
+             Handles.DrawWireArc(topCenter, Vector3.up, arcStartDir, arcDegrees, oRadius);
+             Handles.DrawWireArc(bottomCenter, Vector3.up, arcStartDir, arcDegrees, oRadius);
         }
         // Draw top and bottom arcs (inner)
         if (iRadius > 0 && iRadius < oRadius) {
-             Handles.DrawWireArc(topCenter, Vector3.up, arcStartDir, arcDeg, iRadius);
-             Handles.DrawWireArc(bottomCenter, Vector3.up, arcStartDir, arcDeg, iRadius);
+             Handles.DrawWireArc(topCenter, Vector3.up, arcStartDir, arcDegrees, iRadius);
+             Handles.DrawWireArc(bottomCenter, Vector3.up, arcStartDir, arcDegrees, iRadius);
         }
 
          // Draw connecting lines for sectors
-         if (arcDeg < 359.999f)
+         if (arcDegrees < 359.999f)
          {
              float endRad = startRad + arcRad;
              Vector3 arcEndDir = new Vector3(Mathf.Cos(endRad), 0, Mathf.Sin(endRad));
              // Outer edges
-             if(oRadius > 0) {
-                 Handles.DrawLine(bottomCenter + arcStartDir * oRadius, topCenter + arcStartDir * oRadius);
-                 Handles.DrawLine(bottomCenter + arcEndDir * oRadius, topCenter + arcEndDir * oRadius);
-             }
+             Handles.DrawLine(bottomCenter + arcStartDir * oRadius, topCenter + arcStartDir * oRadius);
+             Handles.DrawLine(bottomCenter + arcEndDir * oRadius, topCenter + arcEndDir * oRadius);
              // Inner edges
              if (iRadius > 0 && iRadius < oRadius) {
                  Handles.DrawLine(bottomCenter + arcStartDir * iRadius, topCenter + arcStartDir * iRadius);
@@ -517,41 +451,30 @@ public class VolumeSpawner : MonoBehaviour
              if (iRadius > 0 && iRadius < oRadius) Handles.DrawLine(bottomCenter + wallDir * iRadius, topCenter + wallDir * iRadius);
          }
 
-        #else
-        // Non-editor fallback would be complex and less accurate - omit for brevity or use basic Gizmos approximations
-        Gizmos.color = outlineColor;
-        Vector3 size = new Vector3(oRadius*2, h, oRadius*2);
-        Gizmos.matrix = Matrix4x4.TRS(center, rotation, Vector3.one);
-        Gizmos.DrawWireCube(Vector3.zero, size);
-        Gizmos.matrix = Matrix4x4.identity;
-
+        #else // Fallback if Handles are not available (e.g., Gizmos drawing without Editor context)
+        // Draw top/bottom arcs using Gizmos (less fancy)
+        DrawArcGizmo(center + transform.up * halfHeight, startRad, arcRad, oRadius, segments, outlineColor, arcDegrees < 359.999f);
+        DrawArcGizmo(center + transform.up * halfHeight, startRad, arcRad, iRadius, segments, outlineColor, false);
+        DrawArcGizmo(center - transform.up * halfHeight, startRad, arcRad, oRadius, segments, outlineColor, arcDegrees < 359.999f);
+        DrawArcGizmo(center - transform.up * halfHeight, startRad, arcRad, iRadius, segments, outlineColor, false);
+        // Draw some connecting lines (less accurate without Handles matrix)
+        // ... (implementation would be more complex here)
         #endif
     }
 
 
-    // Use Gizmos for drawing markers as they are simpler spheres
-    void DrawSpawnPointMarkersArc(Vector3 center, Quaternion rotation, float startRad, float arcRad, float radius, Color color)
+    void DrawSpawnPointMarkersArc(Vector3 center, float startRad, float arcRad, float radius, Color color)
     {
         // Only draw markers if spawning on the arc edge
         if (spawnShape != SpawnShape.CircleArcEdge || numberOfObjects <= 0 || radius <= 0) return;
 
         Gizmos.color = color;
         float markerSize = Mathf.Max(0.1f, radius * 0.05f);
-        float validArcDegrees = arcRad * Mathf.Rad2Deg; // Need degrees for calculation logic
 
-        // Replicate the angle calculation logic from CalculatePositionOnArcEdge for accuracy
+        // Replicate the angle calculation logic from DelayedUpdateSpawn for accuracy
         for (int i = 0; i < numberOfObjects; i++)
         {
-            float currentAngleRad;
-             if (numberOfObjects == 1) { currentAngleRad = startRad; }
-             else if (validArcDegrees <= 0.001f) { currentAngleRad = startRad; }
-             else if (validArcDegrees >= 359.999f) { currentAngleRad = startRad + i * (Mathf.PI * 2f / numberOfObjects); }
-             else { float angleStepRad = arcRad / (numberOfObjects - 1); currentAngleRad = startRad + i * angleStepRad; }
-
-            Vector3 direction = new Vector3(Mathf.Cos(currentAngleRad), 0, Mathf.Sin(currentAngleRad));
-            // Apply parent rotation to the calculated offset direction
-            Vector3 offset = rotation * (direction * radius);
-            Vector3 spawnPoint = center + offset;
+            Vector3 spawnPoint = CalculatePositionOnArcEdge(startRad, arcRad, i); // Use the exact calculation
             Gizmos.DrawSphere(spawnPoint, markerSize);
         }
     }
