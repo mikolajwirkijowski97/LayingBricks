@@ -95,10 +95,7 @@ public class HealthKitManager : MonoBehaviour
             return;
         }
 
-        // Success! We have the total value.
-        // *** IMPORTANT: Assume the value is in METERS. Verify this assumption! ***
-        // If BEHealthKit returns miles by default, the conversion factor would be different ( * 1.60934)
-        double totalKilometers = totalValue / 1000.0;
+        double totalKilometers = totalValue;
 
         Debug.Log($"Successfully fetched total distance: {totalValue} meters = {totalKilometers:F2} kilometers.");
 

@@ -27,6 +27,7 @@ public class Game : MonoBehaviour
             {
                 Debug.Log("HealthKit authorization successful.");
                 healthKitManager.GetTotalDistanceEver(); // Call the method to fetch the total distance
+                InitializeInstancedTower(); // Initialize the tower instance
             }
             else
             {
