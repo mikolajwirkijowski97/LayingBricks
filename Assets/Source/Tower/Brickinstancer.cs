@@ -285,6 +285,7 @@ public class TowerInstancedRenderer : MonoBehaviour
             _tower.TotalBricks = distance; // Update tower data with fetched distance
             Debug.LogError("Failed to fetch last distance from iCloud KeyValueStore.");
         }
+        kvs.SetInt("LastDistance", distance); // Update the last distance in iCloud KeyValueStore
     }
     /// <summary>
     /// Rebuilds the list of Matrix4x4[] batches used for DrawMeshInstanced calls.
