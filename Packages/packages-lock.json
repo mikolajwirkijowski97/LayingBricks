@@ -1,5 +1,21 @@
 {
   "dependencies": {
+    "com.gilzoide.key-value-storage.icloud-kvs": {
+      "version": "https://github.com/gilzoide/unity-key-value-store-icloud-kvs.git#1.0.0-preview1",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {
+        "com.gilzoide.key-value-store": "1.0.0"
+      },
+      "hash": "f973d516feb27158ee440b33019f53a10ab34f46"
+    },
+    "com.gilzoide.key-value-store": {
+      "version": "https://github.com/gilzoide/unity-key-value-store.git#1.0.0-preview2",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "4b811e00f26a759d144d5f9635eb5d0a866e147a"
+    },
     "com.unity.adaptiveperformance": {
       "version": "5.1.3",
       "depth": 1,
