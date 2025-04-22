@@ -26,8 +26,7 @@ public class Game : MonoBehaviour
             if (success)
             {
                 Debug.Log("HealthKit authorization successful.");
-                InitializeInstancedTower();
-                
+                healthKitManager.GetTotalDistanceEver(); // Call the method to fetch the total distance
             }
             else
             {
@@ -38,6 +37,8 @@ public class Game : MonoBehaviour
 
     }
 
+
+
     // Update is called once per frame
     void Update()
     {
@@ -46,8 +47,6 @@ public class Game : MonoBehaviour
 
     void InitializeInstancedTower()
     {
-        Debug.Log("Initializing Instanced Tower Auth Callback...");
         towerInstancedRenderer.TurnOn();
-
-    }
+    } 
 }

@@ -256,7 +256,12 @@ public class TowerInstancedRenderer : MonoBehaviour
         ClearBatches(); // Clear batches to free up resources
     }
 
-
+    public void OnHKDistanceFetched(int distance) {
+        Debug.Log($"Fetched distance: {distance}");
+        _tower.TotalBricks = distance; // Update tower data with fetched distance
+        ClearBatches(); // Clear batches to force a rebuild with new data
+        MarkBatchesDirty(); // Mark batches as dirty to trigger rebuild
+    }
     /// <summary>
     /// Rebuilds the list of Matrix4x4[] batches used for DrawMeshInstanced calls.
     /// This is done only when _needsBatchRebuild is true.

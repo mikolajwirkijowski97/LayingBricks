@@ -54,13 +54,7 @@ public class HealthKitManager : MonoBehaviour
             return;
         }
 
-        // 2. --- Authorization ---
-        // Request authorization. The user will see the iOS prompt if needed.
-        // The actual read operation later will fail if permission is denied.
-        Debug.Log("Requesting HealthKit authorization for required types...");
-        healthStore.Authorize(dataTypes); // Call Authorize as per README basic usage
-
-        // 3. --- Initiate Data Read ---
+        // 2. --- Initiate Data Read ---
         // We call the read method immediately after Authorize.
         // The callback will handle success or permission errors.
         ReadTotalWalkRunDistance();
