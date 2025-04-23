@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Gilzoide.KeyValueStore.ICloudKvs;
 using UnityEngine;
+using UnityEngine.iOS;
 
 /// <summary>
 /// Responsible for rendering the bricks of a Tower procedural structure using GPU instancing.
@@ -259,12 +260,12 @@ public class TowerInstancedRenderer : MonoBehaviour
 
 
     public void OnHKDistanceFetched(int distance) {
-        ClearBatches(); // Clear batches to force a rebuild with new data
-        TurnOn(); // Re-enable rendering when distance is fetched
         
         ICloudKeyValueStore kvs = new ICloudKeyValueStore();
 
-        if (kvs.TryGetInt("LastDistance", out int lastDistance)) {
+        if (Application.platform == RuntimePlatform.IPhonePlayer && 
+        kvs.TryGetInt("LastDistance", out int lastDistance)) {
+
             Debug.Log($"Last saved distance: {lastDistance}");
             Debug.Log($"Fetched distance: {distance}");
             _tower.TotalBricks = lastDistance; // Update tower data with last the last saved distance
@@ -285,6 +286,8 @@ public class TowerInstancedRenderer : MonoBehaviour
             _tower.TotalBricks = distance; // Update tower data with fetched distance
             Debug.LogError("Failed to fetch last distance from iCloud KeyValueStore.");
         }
+        ClearBatches(); // Clear batches to force a rebuild with new data
+        TurnOn(); // Re-enable rendering when distance is fetched
         kvs.SetInt("LastDistance", distance); // Update the last distance in iCloud KeyValueStore
     }
     /// <summary>
