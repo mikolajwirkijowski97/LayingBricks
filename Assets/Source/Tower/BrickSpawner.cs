@@ -115,6 +115,11 @@ public class BrickSpawner : MonoBehaviour
     }
 
     public void AddBricks(int count){
+        if(count <= 0)
+        {
+            Debug.LogWarning("Count must be greater than zero.", this);
+            return; // No bricks to add
+        }
         Debug.Log($"Adding {count} bricks to the tower.", this);
         Debug.Log($"Tower height: {TowerData.Height}", this);
         Debug.Log($"Tower total bricks: {TowerData.TotalBricks}", this);

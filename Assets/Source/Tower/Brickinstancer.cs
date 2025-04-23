@@ -269,11 +269,6 @@ public class TowerInstancedRenderer : MonoBehaviour
             Debug.Log($"Last saved distance: {lastDistance}");
             Debug.Log($"Fetched distance: {distance}");
             _tower.TotalBricks = lastDistance; // Update tower data with last the last saved distance
-            if (lastDistance == distance) {
-                Debug.Log("Distance is the same, no action needed.");
-                return;
-            }
-    
             Debug.Log($"Distance changed from {lastDistance} to {distance}");
 
             // Code smell? Yes. Do I care? No.
