@@ -62,7 +62,6 @@ public class BrickSpawner : MonoBehaviour
     private GameObject _brickPrefab; // Prefab of the brick to spawn
 
     private Queue<AnimatedBrick> _animationQueue = new Queue<AnimatedBrick>(); // Queue for brick falling animations
-    private List<GameObject> _bricks = new List<GameObject>(); // List of spawned bricks
     
     public GameObject BrickPrefab
     {
@@ -75,7 +74,7 @@ public class BrickSpawner : MonoBehaviour
 
     private void InitializeGeometryGenerator()
     {
-
+        Debug.Log("ReInitializing Geometry Generator in BrickSpawner", this);
          if (_towerData != null)
          {
              try {
@@ -91,6 +90,11 @@ public class BrickSpawner : MonoBehaviour
               _geometryGenerator = null; // Tower is null, no generator
          }
     }
+
+    void Awake()
+    {
+     TowerData.OnParametersChanged += InitializeGeometryGenerator; // Subscribe to tower data changes   
+    }
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -104,12 +108,18 @@ public class BrickSpawner : MonoBehaviour
         
     }
 
-    void Add10Bricks()
+    public void Add10Bricks()
     {
-        int bricksToAdd = 21; // Number of bricks to add
+        int bricksToAdd = 10; // Number of bricks to add
         AddBricks(bricksToAdd); // Call the method to add bricks
     }
-    void AddBricks(int count){
+
+    public void AddBricks(int count){
+        if(count <= 0)
+        {
+            Debug.LogWarning("Count must be greater than zero.", this);
+            return; // No bricks to add
+        }
         Debug.Log($"Adding {count} bricks to the tower.", this);
         Debug.Log($"Tower height: {TowerData.Height}", this);
         Debug.Log($"Tower total bricks: {TowerData.TotalBricks}", this);

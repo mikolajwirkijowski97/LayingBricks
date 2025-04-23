@@ -1,5 +1,7 @@
 using System.Collections.Generic;
+using Gilzoide.KeyValueStore.ICloudKvs;
 using UnityEngine;
+using UnityEngine.iOS;
 
 /// <summary>
 /// Responsible for rendering the bricks of a Tower procedural structure using GPU instancing.
@@ -33,9 +35,10 @@ public class TowerInstancedRenderer : MonoBehaviour
     // Stores the prepared batches of matrices ready for rendering
     private readonly List<Matrix4x4[]> _persistentBatches = new List<Matrix4x4[]>();
     private bool _needsBatchRebuild = true; // Separate flag for batching, triggered by generator being dirty
-
+    
     // --- Properties ---
 
+    public bool isOn = false; // Flag to control rendering state
     public Tower Tower
     {
         get { return _tower; }
@@ -134,7 +137,9 @@ public class TowerInstancedRenderer : MonoBehaviour
     }
 
     void Update()
-    {
+    {   
+        if (!isOn) return; // Skip rendering if not enabled
+
         // Basic checks for essential components
         if (_geometryGenerator == null || _brickMesh == null || _brickMaterial == null) return;
 
@@ -151,12 +156,11 @@ public class TowerInstancedRenderer : MonoBehaviour
         {
             // If the last transform in batchToDraw is further than maxDistance, skip drawing
             // This is a simple optimization to avoid drawing far away bricks
-            float maxDistance = 100f; // Example maximum distance
+            float maxDistance = 200f; // Example maximum distance
             Vector3 cameraPosition = Camera.main.transform.position;
             Vector3 lastBrickPosition = batchToDraw[batchToDraw.Length - 1].GetColumn(3);
             if (Vector3.Distance(cameraPosition, lastBrickPosition) > maxDistance)
             {
-                Debug.Log($"Skipping draw call for batch at distance {Vector3.Distance(cameraPosition, lastBrickPosition)} > {maxDistance}");
                 continue;
             }
 
@@ -235,7 +239,52 @@ public class TowerInstancedRenderer : MonoBehaviour
          _needsBatchRebuild = true; // Ensure rebuild is triggered next update
     }
 
+    public void TurnOn()
+    {
+        ClearBatches(); // Clear any existing batches on start
+        // Ensure the geometry generator is initialized and caches are rebuilt
+        if (_geometryGenerator != null)
+        {
+            _geometryGenerator.RebuildCachesIfNeeded();
+            RebuildBatchesIfNeeded(); // Rebuild batches after cache update
+        }
+        isOn = true;
+    }
 
+    public void TurnOff()
+    {
+        isOn = false; // Disable rendering
+        ClearBatches(); // Clear batches to free up resources
+    }
+
+
+
+    public void OnHKDistanceFetched(int distance) {
+        
+        ICloudKeyValueStore kvs = new ICloudKeyValueStore();
+
+        if (Application.platform == RuntimePlatform.IPhonePlayer && 
+        kvs.TryGetInt("LastDistance", out int lastDistance)) {
+
+            Debug.Log($"Last saved distance: {lastDistance}");
+            Debug.Log($"Fetched distance: {distance}");
+            _tower.TotalBricks = lastDistance; // Update tower data with last the last saved distance
+            Debug.Log($"Distance changed from {lastDistance} to {distance}");
+
+            // Code smell? Yes. Do I care? No.
+            // If the code gets too big, move the logic to brick spawner.
+            // Its ugly because im brick spawner should handle this logic, but im too lazy rn.
+            BrickSpawner bs = FindFirstObjectByType<BrickSpawner>();
+            bs.AddBricks(distance - lastDistance); // Add new bricks to the tower
+            kvs.SetInt("LastDistance", distance); // Update the last distance in iCloud KeyValueStore
+        } else {
+            _tower.TotalBricks = distance; // Update tower data with fetched distance
+            Debug.LogError("Failed to fetch last distance from iCloud KeyValueStore.");
+        }
+        ClearBatches(); // Clear batches to force a rebuild with new data
+        TurnOn(); // Re-enable rendering when distance is fetched
+        kvs.SetInt("LastDistance", distance); // Update the last distance in iCloud KeyValueStore
+    }
     /// <summary>
     /// Rebuilds the list of Matrix4x4[] batches used for DrawMeshInstanced calls.
     /// This is done only when _needsBatchRebuild is true.
@@ -255,6 +304,7 @@ public class TowerInstancedRenderer : MonoBehaviour
         var currentBatchMatrices = new List<Matrix4x4>(MAX_INSTANCES_PER_DRAW_CALL);
         int bricksBuilt = 0;
         int totalBricksToBuild = _tower.TotalBricks;
+        Debug.Log($"Rebuilding batches(cause needed)\nTotal bricks to build: {totalBricksToBuild}");
 
         for (int level = 0; level < totalLevelsToBuild && bricksBuilt < totalBricksToBuild; level++)
         {

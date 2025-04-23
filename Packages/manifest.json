@@ -1,5 +1,7 @@
 {
   "dependencies": {
+    "com.gilzoide.key-value-storage.icloud-kvs": "https://github.com/gilzoide/unity-key-value-store-icloud-kvs.git#1.0.0-preview1",
+    "com.gilzoide.key-value-store": "https://github.com/gilzoide/unity-key-value-store.git#1.0.0-preview2",
     "com.unity.collab-proxy": "2.7.1",
     "com.unity.feature.mobile": "1.0.0",
     "com.unity.ide.rider": "3.0.31",
