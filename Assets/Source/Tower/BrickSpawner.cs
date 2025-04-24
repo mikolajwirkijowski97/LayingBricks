@@ -3,15 +3,15 @@ using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine.UI;
 using System.Linq;
-using System;
+using Unity.VisualScripting;
+
 /// <summary>
 /// This class takes in Matrix4x4 arrays and spawns GameObjects at the specified positions and rotations.
 /// It is used to handle the spawning of bricks that are dynamic and can't be rendered using instancing.
+/// (I mean they can, but its much easier to just spawn them and animate them with DOTween)
 /// </summary>
-
 public class BrickSpawner : MonoBehaviour
 {
-
     public Button SpawnButton; // Button to trigger the spawning of bricks
 
     [SerializeField]
@@ -110,7 +110,7 @@ public class BrickSpawner : MonoBehaviour
 
     public void Add10Bricks()
     {
-        int bricksToAdd = 10; // Number of bricks to add
+        int bricksToAdd = 42; // Number of bricks to add
         AddBricks(bricksToAdd); // Call the method to add bricks
     }
 
@@ -181,7 +181,7 @@ public class BrickSpawner : MonoBehaviour
         }
 
         float cumDelay = 0.0f;
-        const float DELAY_TIME = 5.0f; // Total time over which delays are spread
+        const float DELAY_TIME = 3.0f; // Total time over which delays are spread
         const float ROTATION_SPEED = 8.0f; // Speed of rotation for the bricks
 
         float animationDuration = 1.2f; // Duration for move, scale, and shake
@@ -229,7 +229,7 @@ public class BrickSpawner : MonoBehaviour
              float processed_delay = cumDelay;
 
             // Create the DOTween Sequence
-            Sequence brickSequence = DOTween.Sequence();
+            var brickSequence = DOTween.Sequence();
 
             // 1. Apply the initial delay before any animation starts in the sequence
             //    Using SetDelay on the sequence applies it once at the beginning.
@@ -247,7 +247,7 @@ public class BrickSpawner : MonoBehaviour
             // 4. Join the Shake Rotation animation to also run concurrently
             brickSequence.Join(brickGO.transform.DOShakeRotation(animationDuration, Vector3.one*ROTATION_SPEED, 10, 90, false));
                                         // Parameters: duration, strength, vibrato, randomness, fadeout(false)
-
+            int iValue = i;
             // Optional: Set target for easier debugging or potential cleanup later
             brickSequence.SetTarget(brickGO);
             brickSequence.onComplete = () => {
@@ -255,7 +255,28 @@ public class BrickSpawner : MonoBehaviour
                 Vector3 puffSpawnPosition = new Vector3(position.x,
                     position.y - 0.2f, position.z);
 
-                Instantiate(_smokePuffPrefab, puffSpawnPosition, Quaternion.identity);
+                var spp = Instantiate(_smokePuffPrefab, puffSpawnPosition, Quaternion.identity);
+                float t = iValue/42.0f;
+                bool isLastBrick = iValue == i - 1; // Check if this is the last brick
+                // Process Audio On Complete
+                var audioSource = spp.GetComponent<AudioSource>();
+                audioSource.time = 0.2f;
+                audioSource.pitch = isLastBrick ? 1f : Mathf.Lerp(0.8f, 3.0f,t); // Set pitch
+                audioSource.volume = isLastBrick ? 1.0f : 0.7f; // Set volume
+
+                audioSource.Play(); // Play the sound
+                Debug.Log("The pitch of the smoke puff is: " + spp.GetComponent<AudioSource>().pitch, this);
+                Destroy(spp, 2.0f); // Destroy the smoke puff after 2 seconds
+
+                // Make last particle explosion bigger
+                if (iValue == i-1)
+                {
+                    var particleSystem = spp.GetComponent<ParticleSystem>();
+                    var main = particleSystem.main;
+                    // Set the start size to a range between 0.08 and 0.15
+                    main.startSize = new ParticleSystem.MinMaxCurve(0.08f, 0.15f);
+            
+                }
 
             };
 
