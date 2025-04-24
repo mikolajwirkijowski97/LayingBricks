@@ -112,6 +112,8 @@ public class VolumeSpawner : MonoBehaviour
 
     void DelayedUpdateSpawn()
     {
+        Random.InitState(69420); // Seed for consistent randomization in editor
+        
         // Ensure component/GameObject still exists before proceeding
         if (this == null || gameObject == null || !gameObject.scene.IsValid()) return;
 

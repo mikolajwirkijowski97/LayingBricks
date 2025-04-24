@@ -262,7 +262,7 @@ public class BrickSpawner : MonoBehaviour
                 var audioSource = spp.GetComponent<AudioSource>();
                 audioSource.time = 0.2f;
                 audioSource.pitch = isLastBrick ? 1f : Mathf.Lerp(0.8f, 3.0f,t); // Set pitch
-                audioSource.volume = isLastBrick ? 1.0f : 0.7f; // Set volume
+                audioSource.volume = isLastBrick ? 0.5f : 0.3f; // Set volume
 
                 audioSource.Play(); // Play the sound
                 Debug.Log("The pitch of the smoke puff is: " + spp.GetComponent<AudioSource>().pitch, this);
