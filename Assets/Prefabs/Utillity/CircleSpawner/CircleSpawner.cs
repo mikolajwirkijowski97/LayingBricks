@@ -113,7 +113,7 @@ public class VolumeSpawner : MonoBehaviour
     void DelayedUpdateSpawn()
     {
         Random.InitState(69420); // Seed for consistent randomization in editor
-        
+
         // Ensure component/GameObject still exists before proceeding
         if (this == null || gameObject == null || !gameObject.scene.IsValid()) return;
 
@@ -211,6 +211,7 @@ public class VolumeSpawner : MonoBehaviour
 
                 // --- Instantiate, Scale & Parent ---
                 GameObject spawnedObject = Instantiate(prefabToUse, spawnPosition, spawnRotation, transform);
+                spawnedObject.hideFlags = HideFlags.HideInHierarchy | HideFlags.DontSave; // Hide in hierarchy and don't save to scene
                 spawnedObject.name = $"{prefabToUse.name}_{i}";
                 spawnedObject.transform.localScale = prefabToUse.transform.localScale * scaleFactor;
 
