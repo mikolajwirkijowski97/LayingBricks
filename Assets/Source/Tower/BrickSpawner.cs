@@ -12,8 +12,6 @@ using Unity.VisualScripting;
 /// </summary>
 public class BrickSpawner : MonoBehaviour
 {
-    public Button SpawnButton; // Button to trigger the spawning of bricks
-
     [SerializeField]
     [Tooltip("The smoke puff prefab to get instantiated on animation end.")]
     private GameObject _smokePuffPrefab; // Prefab of the smoke puff to instantiate
@@ -99,7 +97,6 @@ public class BrickSpawner : MonoBehaviour
     void Start()
     {
         InitializeGeometryGenerator(); 
-        SpawnButton.onClick.AddListener(Add10Bricks); // Add listener to the button to spawn bricks
     }
 
     // Update is called once per frame
@@ -117,7 +114,7 @@ public class BrickSpawner : MonoBehaviour
     public void AddBricks(int count){
         if(count <= 0)
         {
-            Debug.LogWarning("Count must be greater than zero.", this);
+            if(count < 0) Debug.LogWarning("Count must be greater than zero!", this);
             return; // No bricks to add
         }
         Debug.Log($"Adding {count} bricks to the tower.", this);

@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Gilzoide.KeyValueStore.ICloudKvs;
 using UnityEngine;
 using UnityEngine.iOS;
 
@@ -259,32 +258,13 @@ public class TowerInstancedRenderer : MonoBehaviour
 
 
 
-    public void OnHKDistanceFetched(int distance) {
+    public void setInstancedTowerSize(int bricks) {
         
-        ICloudKeyValueStore kvs = new ICloudKeyValueStore();
-
-        if (Application.platform == RuntimePlatform.IPhonePlayer && 
-        kvs.TryGetInt("LastDistance", out int lastDistance)) {
-
-            Debug.Log($"Last saved distance: {lastDistance}");
-            Debug.Log($"Fetched distance: {distance}");
-            _tower.TotalBricks = lastDistance; // Update tower data with last the last saved distance
-            Debug.Log($"Distance changed from {lastDistance} to {distance}");
-
-            // Code smell? Yes. Do I care? No.
-            // If the code gets too big, move the logic to brick spawner.
-            // Its ugly because im brick spawner should handle this logic, but im too lazy rn.
-            BrickSpawner bs = FindFirstObjectByType<BrickSpawner>();
-            bs.AddBricks(distance - lastDistance); // Add new bricks to the tower
-            kvs.SetInt("LastDistance", distance); // Update the last distance in iCloud KeyValueStore
-        } else {
-            _tower.TotalBricks = distance; // Update tower data with fetched distance
-            Debug.LogError("Failed to fetch last distance from iCloud KeyValueStore.");
-        }
+        _tower.TotalBricks = bricks; // Set the total bricks based on fetched distance
         ClearBatches(); // Clear batches to force a rebuild with new data
         TurnOn(); // Re-enable rendering when distance is fetched
-        kvs.SetInt("LastDistance", distance); // Update the last distance in iCloud KeyValueStore
     }
+
     /// <summary>
     /// Rebuilds the list of Matrix4x4[] batches used for DrawMeshInstanced calls.
     /// This is done only when _needsBatchRebuild is true.

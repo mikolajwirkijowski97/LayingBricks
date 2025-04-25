@@ -24,8 +24,15 @@ public class HealthKitManager : MonoBehaviour
 
 
     // Public method to initiate the process
-    public void GetTotalDistanceEver()
+    public void GetTotalDistanceEver(DateTimeOffset startDate)
     {
+        if(Application.platform != RuntimePlatform.IPhonePlayer)
+        {
+            Debug.LogWarning("HealthKit is only available on iOS devices. This method will not execute on this platform. Spoofing data instead.");
+            HandleDistanceDataResponse(8050, null); // Spoofing data for testing purposes
+            return;
+        }
+
         // 1. --- Pre-checks ---
         if (healthStore == null)
         {
@@ -57,10 +64,10 @@ public class HealthKitManager : MonoBehaviour
         // 2. --- Initiate Data Read ---
         // We call the read method immediately after Authorize.
         // The callback will handle success or permission errors.
-        ReadTotalWalkRunDistance();
+        ReadTotalWalkRunDistance(startDate);
     }
 
-    private void ReadTotalWalkRunDistance()
+    private void ReadTotalWalkRunDistance(DateTimeOffset startDate)
     {
         // Define the data type we want to read
         HKDataType dataType = HKDataType.HKQuantityTypeIdentifierDistanceWalkingRunning;
@@ -68,7 +75,6 @@ public class HealthKitManager : MonoBehaviour
         // Define the time range: From the earliest possible date to now.
         // HealthKit data likely started around iOS 8 (2014), but using a very early date ensures we capture everything.
         // DateTimeOffset.MinValue might cause issues on some platforms/libraries, using a specific early date is safer.
-        DateTimeOffset startDate = new DateTimeOffset(2000, 1, 1, 0, 0, 0, TimeSpan.Zero);
         DateTimeOffset endDate = DateTimeOffset.UtcNow; // Up to the current moment
 
         Debug.Log($"Attempting to read total {dataType} from {startDate} to {endDate}");
