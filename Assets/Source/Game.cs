@@ -98,6 +98,7 @@ public class Game : MonoBehaviour
             Debug.Log($"Unclaimed bricks: {unclaimedBricks}");
 
         } else {
+            unclaimedBricks = distance; // If fetching fails, set unclaimed bricks to the fetched distance
             kvs.SetInt("ClaimedBricks", 0); // Set the claimed distance to the fetched distance
             Debug.LogError("Failed to fetch already claimed bricks from iCloud KeyValueStore.");
         }
