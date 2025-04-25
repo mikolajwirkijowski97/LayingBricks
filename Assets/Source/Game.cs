@@ -3,6 +3,7 @@ using BeliefEngine.HealthKit;
 using Gilzoide.KeyValueStore.ICloudKvs;
 using System;
 using TMPro;
+using Unity.Profiling;
 
 public class Game : MonoBehaviour
 {
@@ -38,15 +39,14 @@ public class Game : MonoBehaviour
         SetStartDate(); // Set the start date
     }
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
 
-        if (!_isIphone) {
-            healthKitManager.GetTotalDistanceEver(startDate); // Call the method with no auth, it will return a spoofed value
-            return; // If not iOS, exit the method
-        }
-        // Iphone related things
+    private void _StartSpoofed()
+    {
+       healthKitManager.GetTotalDistanceEver(startDate); // Call the method to fetch the total distance 
+    }
+
+    private void _StartIOS()
+    {     
         if (healthKitManager == null)
         {
             Debug.LogError("HealthKitManager reference is not set in the inspector.");
@@ -65,9 +65,21 @@ public class Game : MonoBehaviour
             else
             {
                 Debug.LogError("HealthKit authorization failed.");
-                // Handle the failure case
             }
-        }); // Request authorization for HealthKit data types
+        });
+
+    }
+    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    void Start()
+    {
+
+        if (_isIphone) {
+            _StartIOS();
+        } else {
+            _StartSpoofed();
+        }
+        
+
     }
 
     // Update is called once per frame
@@ -76,16 +88,10 @@ public class Game : MonoBehaviour
         
     }
 
-    void FetchCalculateUnclaimedBricks(int distance) {
-        
-        UnclaimedBricks = 21;
-        Debug.Log($"Unclaimed bricks: {unclaimedBricks}");
-        // If the platform is not iOS, exit the method
-        if(!_isIphone) return;
-
-
+    private void _FetchCalculateUnclaimedBrickIOS(int distance)
+    {
         // Fetch how much distance the player has already claimed.
-        if (kvs.TryGetInt("ClaimedDistance", out int claimedBricks)) {
+        if (kvs.TryGetInt("ClaimedBricks", out int claimedBricks)) {
             // If the claimed distance is fetched successfully, calculate the unclaimed bricks
             UnclaimedBricks = distance - claimedBricks; 
 
@@ -98,23 +104,52 @@ public class Game : MonoBehaviour
             Debug.Log($"Unclaimed bricks: {unclaimedBricks}");
 
         } else {
-            unclaimedBricks = distance; // If fetching fails, set unclaimed bricks to the fetched distance
+            UnclaimedBricks = distance; // If fetching fails, set unclaimed bricks to the fetched distance
             kvs.SetInt("ClaimedBricks", 0); // Set the claimed distance to the fetched distance
             Debug.LogError("Failed to fetch already claimed bricks from iCloud KeyValueStore.");
         }
     }
 
-    void SetStartDate(){
-        if(!_isIphone) return; // If not iOS, exit the method
+    private void _FetchCalculateUnclaimedBrickSpoofed(int distance)
+    {
+        // Spoofed data for testing purposes
+        UnclaimedBricks = 21; // Set unclaimed bricks to a fixed value for testing
+        Debug.Log($"Unclaimed bricks: {unclaimedBricks}");
+    }
 
-        startDate.ToUnixTimeMilliseconds();
-        if(Application.platform == RuntimePlatform.IPhonePlayer && kvs.TryGetLong("StartDate", out long startDateLong)) {
+    void FetchCalculateUnclaimedBricks(int distance) {
+        if (_isIphone) {
+            _FetchCalculateUnclaimedBrickIOS(distance); // Fetch and calculate unclaimed bricks for iOS
+        } else {
+            _FetchCalculateUnclaimedBrickSpoofed(distance); // Spoofed data for testing
+        }  
+    }
+
+    void _SetStartDateIOS() {
+        if(kvs.TryGetLong("StartDate", out long startDateLong))
+        {
             startDate = DateTimeOffset.FromUnixTimeMilliseconds(startDateLong);
             Debug.Log($"Start date: {startDate}");
-        } else {
+        }
+        else 
+        {
             startDate = DateTimeOffset.UtcNow; // Set the start date to the current time
             kvs.SetLong("StartDate", startDate.ToUnixTimeMilliseconds()); // Save the start date to iCloud KeyValueStore
             Debug.LogError("Failed to fetch start date from iCloud KeyValueStore. Setting to current time.");
+        }
+    }
+
+    void _SetStartDateSpoofed() {
+        startDate = new DateTimeOffset(2008, 10, 12, 0, 0, 0, TimeSpan.Zero); // Set the start date to the current time
+        Debug.Log($"Start date: {startDate}");
+    }
+
+    void SetStartDate()
+    {
+        if (_isIphone) {
+            _SetStartDateIOS(); // Set start date for iOS
+        } else {
+            _SetStartDateSpoofed(); // Spoofed data for testing
         }
     }
 
@@ -128,18 +163,33 @@ public class Game : MonoBehaviour
         towerInstancedRenderer.setInstancedTowerSize(ClaimedBricks); // Set the size of the tower based on claimed bricks
     }
 
-    public void ClaimBricks(){
-        // Claim the bricks and update the claimed distance in iCloud KeyValueStore
-        if (Application.platform == RuntimePlatform.IPhonePlayer) {
-            kvs.SetInt("ClaimedBricks", totalDistance); // Set the claimed distance to the iCloud KeyValueStore
-        }
-         else {
-            Debug.LogError("ClaimBricks method is only available on iOS platform.");
-        }
-            towerBrickSpawner.AddBricks(unclaimedBricks); // Add the unclaimed bricks to the tower
-            UnclaimedBricks = 0;
+    public void _ClaimBricksSpoofed()
+    {
+        towerBrickSpawner.AddBricks(unclaimedBricks); // Add the unclaimed bricks to the tower
+        UnclaimedBricks = 0; // Reset unclaimed bricks to 0
+        Debug.Log($"Claimed bricks are now at: {ClaimedBricks}");
+    }
 
-            Debug.Log($"Claimed bricks are now at: {ClaimedBricks}");
+    public void _ClaimBricksIOS()
+    {
+        // Claim the bricks and update the claimed distance in iCloud KeyValueStore
+        if (kvs.TryGetInt("ClaimedBricks", out int claimedBricks)) {
+            kvs.SetInt("ClaimedBricks", totalDistance); // Update the claimed distance in iCloud KeyValueStore
+        } else {
+            Debug.LogError("Failed to fetch already claimed bricks from iCloud KeyValueStore.");
+        }
+        towerBrickSpawner.AddBricks(unclaimedBricks); // Add the unclaimed bricks to the tower
+        UnclaimedBricks = 0; // Reset unclaimed bricks to 0
+
+        Debug.Log($"Claimed bricks are now at: {ClaimedBricks}");
+    }
+
+    public void ClaimBricks(){
+        if (_isIphone) {
+            _ClaimBricksIOS(); // Claim bricks for iOS
+        } else {
+            _ClaimBricksSpoofed(); // Spoofed data for testing
+        }
     }
 
 }
