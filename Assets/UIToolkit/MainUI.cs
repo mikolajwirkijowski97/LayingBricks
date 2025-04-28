@@ -1,7 +1,7 @@
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.UIElements;
-
+using DG.Tweening;
 public class MainUI : MonoBehaviour
 {
 
@@ -40,7 +40,6 @@ public class MainUI : MonoBehaviour
     void Update()
     {
         unclaimedBricksLabel.text = game.UnclaimedBricks.ToString(); // Update the label text with the number of unclaimed bricks
-        claimedBricksLabel.text = game.ClaimedBricks.ToString(); // Update the label text with the number of claimed bricks
-        
+        claimedBricksLabel.text = game.ClaimedBricks.ToString(); // Update the label text with the number of claimed bricks   
     }
 }

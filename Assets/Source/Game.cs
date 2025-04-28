@@ -2,6 +2,7 @@ using UnityEngine;
 using Gilzoide.KeyValueStore.ICloudKvs;
 using System;
 using UnityEngine.UIElements;
+using DG.Tweening;
 
 public class Game : MonoBehaviour
 {
@@ -156,7 +157,8 @@ public class Game : MonoBehaviour
     public void _ClaimBricksSpoofed()
     {
         towerBrickSpawner.AddBricks(UnclaimedBricks); // Add the unclaimed bricks to the tower
-        UnclaimedBricks = 0; // Reset unclaimed bricks to 0
+        // Animate the claimed bricks to 0 using DOTween
+        DOTween.To(() => UnclaimedBricks, x => UnclaimedBricks = x, 0, 1f);
         Debug.Log($"Claimed bricks are now at: {ClaimedBricks}");
     }
 
@@ -169,7 +171,9 @@ public class Game : MonoBehaviour
             Debug.LogError("Failed to fetch already claimed bricks from iCloud KeyValueStore.");
         }
         towerBrickSpawner.AddBricks(UnclaimedBricks); // Add the unclaimed bricks to the tower
-        UnclaimedBricks = 0; // Reset unclaimed bricks to 0
+        
+        // Animate the claimed bricks to 0 using DOTween
+        DOTween.To(() => UnclaimedBricks, x => UnclaimedBricks = x, 0, 1f);
 
         Debug.Log($"Claimed bricks are now at: {ClaimedBricks}");
     }
@@ -181,5 +185,7 @@ public class Game : MonoBehaviour
             _ClaimBricksSpoofed(); // Spoofed data for testing
         }
     }
+
+
 
 }
