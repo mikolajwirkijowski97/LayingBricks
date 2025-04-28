@@ -259,7 +259,8 @@ public class TowerInstancedRenderer : MonoBehaviour
 
 
     public void setInstancedTowerSize(int bricks) {
-        
+        if(bricks == _tower.TotalBricks) return; // No change in size, no need to update
+
         _tower.TotalBricks = bricks; // Set the total bricks based on fetched distance
         ClearBatches(); // Clear batches to force a rebuild with new data
         TurnOn(); // Re-enable rendering when distance is fetched

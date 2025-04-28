@@ -1,7 +1,7 @@
 :root {
     --color-periwinkle: rgb(195, 177, 225);
-    --color-peach: rgb(255, 218, 185);
-    --color-mint: rgb(168, 230, 207);
+    --color-peach: #FFDAB9;
+    --color-mint: #A8E6CF;
     --color-mint-dark: rgb(151, 221, 195);
     --color-peach-dark: rgb(245, 206, 168);
     --color-peach-pressed: rgb(235, 193, 157);

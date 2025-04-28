@@ -62,6 +62,12 @@ public class Game : MonoBehaviour
         });
 
     }
+
+    private void CheckDistance()
+    {
+       healthKitManager.GetTotalDistanceEver(startDate); // Call the method to fetch the total distance
+    }
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -70,7 +76,12 @@ public class Game : MonoBehaviour
             _StartIOS();
         } else {
             _StartSpoofed();
-        }   
+        }
+
+        // Repeatedly check the distance every 2 seconds
+        InvokeRepeating("CheckDistance", 0f, 2f); // Check the distance every 2 seconds
+
+
     }
 
     // Update is called once per frame
