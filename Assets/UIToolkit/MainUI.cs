@@ -1,4 +1,3 @@
-using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.UIElements;
 using DG.Tweening;
@@ -11,18 +10,27 @@ public class MainUI : MonoBehaviour
     Label claimedBricksLabel; // Label to display the number of claimed bricks
 
     VisualElement root;
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void OnEnable()
     {
         // Find the Game script in the scene
         game = FindFirstObjectByType<Game>(); // Find the Game script in the scene
-        Assert.IsNotNull(game, "Game script not found in the scene."); // Assert that the Game script is not null
+        if(game == null) // Check if the Game script is found
+        {
+            Debug.LogError("Game script not found in the scene."); // Log an error if not found
+            return; // Exit if not found
+        }
         
         // Get the root visual element from the UIDocument component
         root = GetComponent<UIDocument>().rootVisualElement;
         // Connect button to the claim bricks function
         Button claimBricksButton = root.Q<Button>("ClaimButton"); // Get the button from the UI
-        Assert.IsNotNull(claimBricksButton, "Claim button not found in the UI."); // Assert that the button is not null
+        if (claimBricksButton == null) // Check if the button is found
+        {
+            Debug.LogError("Claim button not found in the UI."); // Log an error if not found
+            return; // Exit if not found
+        }
         claimBricksButton.clicked += () => {
             game.ClaimBricks(); // Call the ClaimBricks function when the button is clicked
             Debug.Log("Claim bricks clicked"); // Log the number of claimed bricks
@@ -30,10 +38,19 @@ public class MainUI : MonoBehaviour
 
         // Set the label text to show the number of unclaimed bricks
         unclaimedBricksLabel = root.Q<Label>("UnclaimedBricksLabel"); // Get the label from the UI
-        Assert.IsNotNull(unclaimedBricksLabel, "Unclaimed bricks label not found in the UI."); // Assert that the label is not null
+        if (unclaimedBricksLabel == null) // Check if the label is found
+        {
+            Debug.LogError("Unclaimed bricks label not found in the UI."); // Log an error if not found
+            return; // Exit if not found
+        }
+
 
         claimedBricksLabel = root.Q<Label>("ClaimedBricksLabel"); // Get the label from the UI
-        Assert.IsNotNull(claimedBricksLabel, "Claimed bricks label not found in the UI."); // Assert that the label is not null
+        if (claimedBricksLabel == null) // Check if the label is found
+        {
+            Debug.LogError("Claimed bricks label not found in the UI."); // Log an error if not found
+            return; // Exit if not found
+        }
     }
 
     // Update is called once per frame
