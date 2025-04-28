@@ -1,9 +1,7 @@
 using UnityEngine;
-using BeliefEngine.HealthKit;
 using Gilzoide.KeyValueStore.ICloudKvs;
 using System;
-using TMPro;
-using Unity.Profiling;
+using UnityEngine.UIElements;
 
 public class Game : MonoBehaviour
 {
@@ -12,24 +10,17 @@ public class Game : MonoBehaviour
     [SerializeField] private TowerInstancedRenderer towerInstancedRenderer;
     [SerializeField] private BrickSpawner towerBrickSpawner;
 
-    private int unclaimedBricks = 21; // Number of unclaimed bricks
     private int totalDistance = -1; // Total distance in meters
     private DateTimeOffset startDate; // Start date for the distance calculation 
 
     private ICloudKeyValueStore kvs; // Key-Value Store for iCloud
 
     // The property is the difference between the total distance and the claimed distance
-    public int ClaimedBricks => totalDistance - unclaimedBricks; // Number of claimed bricks
+    public int ClaimedBricks => totalDistance - UnclaimedBricks; // Number of claimed bricks
 
-    public TextMeshProUGUI unclaimedBricksTextDisplay;
+    public Label UnclaimedBricksLabel;
 
-    public int UnclaimedBricks {
-        get => unclaimedBricks; // Getter for unclaimed bricks
-        set {
-            unclaimedBricks = value; // Setter for unclaimed bricks
-            unclaimedBricksTextDisplay.text = unclaimedBricks.ToString(); // Update the unclaimed bricks value in the UI
-        }
-    }
+    public int UnclaimedBricks = 0;
  
     private bool _isIphone;
     void Awake()
@@ -43,6 +34,7 @@ public class Game : MonoBehaviour
     private void _StartSpoofed()
     {
        healthKitManager.GetTotalDistanceEver(startDate); // Call the method to fetch the total distance 
+       UnclaimedBricks = 21; // Set unclaimed bricks to 0 for spoofed data
     }
 
     private void _StartIOS()
@@ -77,9 +69,7 @@ public class Game : MonoBehaviour
             _StartIOS();
         } else {
             _StartSpoofed();
-        }
-        
-
+        }   
     }
 
     // Update is called once per frame
@@ -101,7 +91,7 @@ public class Game : MonoBehaviour
             }
             Debug.Log($"Claimed distance: {claimedBricks}");
             Debug.Log($"Fetched distance: {distance}");
-            Debug.Log($"Unclaimed bricks: {unclaimedBricks}");
+            Debug.Log($"Unclaimed bricks: {UnclaimedBricks}");
 
         } else {
             UnclaimedBricks = distance; // If fetching fails, set unclaimed bricks to the fetched distance
@@ -114,7 +104,7 @@ public class Game : MonoBehaviour
     {
         // Spoofed data for testing purposes
         UnclaimedBricks = 21; // Set unclaimed bricks to a fixed value for testing
-        Debug.Log($"Unclaimed bricks: {unclaimedBricks}");
+        Debug.Log($"Unclaimed bricks: {UnclaimedBricks}");
     }
 
     void FetchCalculateUnclaimedBricks(int distance) {
@@ -165,7 +155,7 @@ public class Game : MonoBehaviour
 
     public void _ClaimBricksSpoofed()
     {
-        towerBrickSpawner.AddBricks(unclaimedBricks); // Add the unclaimed bricks to the tower
+        towerBrickSpawner.AddBricks(UnclaimedBricks); // Add the unclaimed bricks to the tower
         UnclaimedBricks = 0; // Reset unclaimed bricks to 0
         Debug.Log($"Claimed bricks are now at: {ClaimedBricks}");
     }
@@ -178,7 +168,7 @@ public class Game : MonoBehaviour
         } else {
             Debug.LogError("Failed to fetch already claimed bricks from iCloud KeyValueStore.");
         }
-        towerBrickSpawner.AddBricks(unclaimedBricks); // Add the unclaimed bricks to the tower
+        towerBrickSpawner.AddBricks(UnclaimedBricks); // Add the unclaimed bricks to the tower
         UnclaimedBricks = 0; // Reset unclaimed bricks to 0
 
         Debug.Log($"Claimed bricks are now at: {ClaimedBricks}");
