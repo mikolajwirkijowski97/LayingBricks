@@ -693,6 +693,10 @@ MonoBehaviour:
   moveSensitivity: 0.5
   moveSpeed: 10
   rotationSensitivity: 3
+  zoomSensitivity: 0.5
+  minZoomDistance: 30
+  maxZoomDistance: 60
+  mouseZoomMultiplier: 10
   clampYPosition: 1
   minYPosition: 15
   maxYOffset: 15
