@@ -301,7 +301,7 @@ public class SwipeCameraMover : MonoBehaviour
                 float touchDeltaMag = (touchZero.position - touchOne.position).magnitude;
 
                 // Find the difference in the distances between each frame.
-                float deltaMagnitudeDiff = prevTouchDeltaMag - touchDeltaMag; // Inverted: smaller distance = positive diff = zoom in
+                float deltaMagnitudeDiff = touchDeltaMag - prevTouchDeltaMag; // Inverted: smaller distance = positive diff = zoom in
 
                 // Calculate the zoom amount based on sensitivity and frame rate
                 float zoomAmount = deltaMagnitudeDiff * zoomSensitivity * Time.deltaTime;
@@ -310,7 +310,7 @@ public class SwipeCameraMover : MonoBehaviour
                 Vector3 zoomDirection = (targetObject.position - targetCamera.transform.position).normalized;
 
                 // Move the camera
-                targetCamera.transform.position -= zoomDirection * zoomAmount;
+                targetCamera.transform.position += zoomDirection * zoomAmount;
 
                  // Update previous touch positions for the next frame - **Important for smooth zoom**
                  // Note: This logic assumes HandleTouchInput is called every frame where touchCount == 2.
