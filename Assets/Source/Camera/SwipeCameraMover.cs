@@ -257,7 +257,6 @@ public class SwipeCameraMover : MonoBehaviour
             // Optional: Check if the touch just began over UI, might prevent accidental swipes
             // if (touch.phase == TouchPhase.Began && IsPointerOverUIObject()) return;
 
-
             if (touch.phase == TouchPhase.Moved)
             {
                 // --- Calculate Horizontal Rotation ---
@@ -311,7 +310,7 @@ public class SwipeCameraMover : MonoBehaviour
                 Vector3 zoomDirection = (targetObject.position - targetCamera.transform.position).normalized;
 
                 // Move the camera
-                targetCamera.transform.position += zoomDirection * zoomAmount;
+                targetCamera.transform.position -= zoomDirection * zoomAmount;
 
                  // Update previous touch positions for the next frame - **Important for smooth zoom**
                  // Note: This logic assumes HandleTouchInput is called every frame where touchCount == 2.
