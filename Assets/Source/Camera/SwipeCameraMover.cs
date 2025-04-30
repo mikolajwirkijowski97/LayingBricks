@@ -391,11 +391,11 @@ public class SwipeCameraMover : MonoBehaviour
          // 1. Clamp Y Position
          if (clampYPosition)
          {
-             currentPos.y = Mathf.Clamp(currentPos.y, minYPosition, maxYPosition);
-             // Also clamp the target Y object to prevent it drifting out of bounds
-             Vector3 yTargetPos = _targetYPositionObject.transform.position;
-              yTargetPos.y = Mathf.Clamp(yTargetPos.y, minYPosition, maxYPosition);
-             _targetYPositionObject.transform.position = yTargetPos;
+            currentPos.y = Mathf.Clamp(currentPos.y, minYPosition, maxYPosition);
+            // Also clamp the target Y object to prevent it drifting out of bounds
+            Vector3 yTargetPos = _targetYPositionObject.transform.position;
+            yTargetPos.y = Mathf.Clamp(yTargetPos.y, minYPosition, maxYPosition);
+            _targetYPositionObject.transform.position = yTargetPos;
          }
 
 

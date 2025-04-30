@@ -143,6 +143,7 @@ public class TowerGeometryGenerator
 
         // The start height of the level *after* the last one is the total height
         int levels = _tower?.Height ?? 0;
+        Debug.Log("Total height of the tower: " + levels);
         return _levelStartYCache.TryGetValue(levels, out float totalHeight) ? totalHeight : 0f;
     }
 

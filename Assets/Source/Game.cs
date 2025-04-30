@@ -35,7 +35,6 @@ public class Game : MonoBehaviour
     private void _StartSpoofed()
     {
        healthKitManager.GetTotalDistanceEver(startDate); // Call the method to fetch the total distance 
-       UnclaimedBricks = 21; // Set unclaimed bricks to 0 for spoofed data
     }
 
     private void _StartIOS()
@@ -78,8 +77,8 @@ public class Game : MonoBehaviour
             _StartSpoofed();
         }
 
-        // Repeatedly check the distance every 2 seconds
-        InvokeRepeating("CheckDistance", 0f, 2f); // Check the distance every 2 seconds
+        // Repeatedly check the distance every few seconds
+        InvokeRepeating("CheckDistance", 0f, 10f);
 
 
     }

@@ -1,9 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using DG.Tweening;
-using UnityEngine.UI;
 using System.Linq;
-using Unity.VisualScripting;
 
 /// <summary>
 /// This class takes in Matrix4x4 arrays and spawns GameObjects at the specified positions and rotations.
@@ -183,8 +181,13 @@ public class BrickSpawner : MonoBehaviour
 
         float animationDuration = 1.2f; // Duration for move, scale, and shake
 
+
+        int spawnCount = matrices.Length; // Number of bricks to spawn
+        int maxSounds = 100;
+
+
         // Loop through each matrix in the array and apply TRS (Translation, Rotation, Scale) to spawn bricks
-        for (int i = 0; i < matrices.Length; i++) // Use index for potential future needs
+        for (int i = 0; i < spawnCount; i++) // Use index for potential future needs
         {
             Matrix4x4 matrix = matrices[i];
 
@@ -253,17 +256,7 @@ public class BrickSpawner : MonoBehaviour
                     position.y - 0.2f, position.z);
 
                 var spp = Instantiate(_smokePuffPrefab, puffSpawnPosition, Quaternion.identity);
-                float t = iValue/42.0f;
                 bool isLastBrick = iValue == i - 1; // Check if this is the last brick
-                // Process Audio On Complete
-                var audioSource = spp.GetComponent<AudioSource>();
-                audioSource.time = 0.2f;
-                audioSource.pitch = isLastBrick ? 1f : Mathf.Lerp(0.8f, 3.0f,t); // Set pitch
-                audioSource.volume = isLastBrick ? 0.5f : 0.3f; // Set volume
-
-                audioSource.Play(); // Play the sound
-                Debug.Log("The pitch of the smoke puff is: " + spp.GetComponent<AudioSource>().pitch, this);
-                Destroy(spp, 2.0f); // Destroy the smoke puff after 2 seconds
 
                 // Make last particle explosion bigger
                 if (iValue == i-1)
@@ -274,6 +267,42 @@ public class BrickSpawner : MonoBehaviour
                     main.startSize = new ParticleSystem.MinMaxCurve(0.08f, 0.15f);
             
                 }
+                // Process Audio On Complete
+                // If count of bricks is bigger than maxSounds, skip some sounds
+                // So that the maxSounds sounds are split evenly over all bricks
+                // but only the max amount of sounds are played
+                float t = iValue / (float)spawnCount; // Calculate the pitch based on the brick index and total spawn count
+                if (spawnCount > maxSounds && maxSounds > 0) // Check if we need to limit sounds and if maxSounds is valid
+                {
+                    // Calculate the interval: play a sound every 'skipInterval' bricks
+                    // Use float division for accuracy, then floor to get the integer interval
+                    int skipInterval = Mathf.FloorToInt((float)spawnCount / maxSounds);
+
+                    // Ensure interval is at least 1 (otherwise no sounds might play if maxSounds is very small)
+                    if (skipInterval < 1) skipInterval = 1;
+
+                    // Only play sound if the current brick index is a multiple of the interval
+                    // (or if it's the very last brick, always play its sound)
+                    if (iValue % skipInterval != 0 && !isLastBrick)
+                    {
+                        return;
+                    }
+                    t = ((float)iValue / skipInterval) / maxSounds; // Calculate the pitch based on the brick index and maxSounds
+                }
+                else if (maxSounds <= 0) // Handle edge case where maxSounds is zero or negative
+                {
+                    return;
+                }
+
+                var audioSource = spp.GetComponent<AudioSource>();
+                audioSource.time = 0.2f;
+                audioSource.pitch = isLastBrick ? 1f : Mathf.Lerp(0.8f, 3.0f, t); // Set pitch
+                audioSource.volume = isLastBrick ? 0.5f : 0.3f; // Set volume
+
+                audioSource.Play(); // Play the sound
+                Debug.Log("The pitch of the smoke puff is: " + spp.GetComponent<AudioSource>().pitch, this);
+                Destroy(spp, 2.0f); // Destroy the smoke puff after 2 seconds
+                // NOTE TO SELF: CAMERA RESETS EVERY N SECONDS !!!!!
 
             };
 
