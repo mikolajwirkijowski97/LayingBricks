@@ -59,9 +59,6 @@ public class HealthKitManager : MonoBehaviour
             return;
         }
 
-        // 2. --- Initiate Data Read ---
-        // We call the read method immediately after Authorize.
-        // The callback will handle success or permission errors.
         ReadTotalWalkRunDistance(startDate);
     }
 

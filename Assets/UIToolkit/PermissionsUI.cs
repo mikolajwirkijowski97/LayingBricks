@@ -1,3 +1,4 @@
+using BeliefEngine.HealthKit;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -45,16 +46,29 @@ public class PermissionsUI : MonoBehaviour
             if (success)
             {
 
-                Debug.Log("HealthKit authorization successful. Commiting sudoku.");
-                CreateMainGame(); // Call the method to create the main game
-                Destroy(gameObject); // Destroy the permissions UI after authorization
-                // The above method will trigger an event which in result will trigger the tower appearing
             }
             else
             {
                 Debug.LogError("HealthKit authorization failed. ");
             }
         });
+        
+        var status = healthKitManager.HealthStore.AuthorizationStatusForType(HKDataType.HKQuantityTypeIdentifierDistanceWalkingRunning);
+
+        if(status == HKAuthorizationStatus.SharingAuthorized)
+        {
+            Debug.Log("HealthKit authorization status: Authorized");
+                CreateMainGame(); // Call the method to create the main game
+                Destroy(gameObject); // Destroy the permissions UI after authorization
+                Debug.Log("HealthKit authorization successful. Commiting sudoku.");
+                // The above method will trigger an event which in result will trigger the tower appearing
+        }
+        else if (status == HKAuthorizationStatus.SharingDenied)
+        {
+            Debug.Log("HealthKit authorization status: Denied");
+        }
+
+
     }
 
     void AuthorizeHealthKitSpoofed()
