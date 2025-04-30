@@ -39,7 +39,7 @@ public class PermissionsUI : MonoBehaviour
             {   
 
                 Debug.Log("HealthKit authorization successful.");
-                Instantiate(mainGameObject); // Instantiate the main game object after authorization
+                CreateMainGame(); // Call the method to create the main game
                 Destroy(gameObject); // Destroy the permissions UI after authorization
                 // The above method will trigger an event which in result will trigger the tower appearing.
 
@@ -56,8 +56,14 @@ public class PermissionsUI : MonoBehaviour
     {
         // Simulate authorization for spoofed mode
         Debug.Log("HealthKit authorization successful (spoofed mode).");
-        Instantiate(mainGameObject); // Instantiate the main game object after authorization
+        CreateMainGame(); // Call the method to create the main game
         Destroy(gameObject); // Destroy the permissions UI after authorization
+    }
+
+    void CreateMainGame(){
+         mainGameObject.GetComponent<Game>().HealthKitManager = healthKitManager; // Assign the HealthKitManager to the main game object
+        Instantiate(mainGameObject); // Instantiate the main game object after authorization
+
     }
 
     void AuthorizeHealthKit()

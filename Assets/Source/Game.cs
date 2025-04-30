@@ -6,7 +6,7 @@ using DG.Tweening;
 
 public class Game : MonoBehaviour
 {
-    [SerializeField] private HealthKitManager healthKitManager;
+    public HealthKitManager HealthKitManager;
     [SerializeField] private Tower towerData;
     [SerializeField] private TowerInstancedRenderer towerInstancedRenderer;
     [SerializeField] private BrickSpawner towerBrickSpawner;
@@ -34,22 +34,22 @@ public class Game : MonoBehaviour
 
     private void _StartSpoofed()
     {
-       healthKitManager.GetTotalDistanceEver(startDate); // Call the method to fetch the total distance 
+       HealthKitManager.GetTotalDistanceEver(startDate); // Call the method to fetch the total distance 
     }
 
     private void _StartIOS()
     {     
-        if (healthKitManager == null)
+        if (HealthKitManager == null)
         {
             Debug.LogError("HealthKitManager reference is not set in the inspector.");
             return;
         }
-        healthKitManager.GetTotalDistanceEver(startDate); // Call the method to fetch the total distance
+        HealthKitManager.GetTotalDistanceEver(startDate); // Call the method to fetch the total distance
     }
 
     private void CheckDistance()
     {
-       healthKitManager.GetTotalDistanceEver(startDate); // Call the method to fetch the total distance
+       HealthKitManager.GetTotalDistanceEver(startDate); // Call the method to fetch the total distance
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
