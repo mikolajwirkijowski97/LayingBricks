@@ -7,11 +7,18 @@ public class PermissionsUI : MonoBehaviour
     private Button allowButton;
 
     [SerializeField] private GameObject mainGameObject;
-    [SerializeField] private HealthKitManager healthKitManager; // Reference to the HealthKitManager
+    private HealthKitManager healthKitManager; // Reference to the HealthKitManager
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
+        healthKitManager = FindFirstObjectByType<HealthKitManager>(); // Find the HealthKitManager in the scene
+        if (healthKitManager == null)
+        {
+            Debug.LogError("HealthKitManager not found in the scene. Please ensure it is present.");
+            return;
+        }
+
         root = GetComponent<UIDocument>().rootVisualElement;
         allowButton = root.Q<Button>("AllowButton"); // Get the button from the UI document
         Debug.Log(allowButton); // Log the button for debugging
@@ -36,7 +43,7 @@ public class PermissionsUI : MonoBehaviour
         // Get authorization for healthkit
         healthKitManager.HealthStore.Authorize(healthKitManager.DataTypes, delegate (bool success){
             if (success)
-            {   
+            {
 
                 Debug.Log("HealthKit authorization successful.");
                 CreateMainGame(); // Call the method to create the main game
@@ -61,7 +68,7 @@ public class PermissionsUI : MonoBehaviour
     }
 
     void CreateMainGame(){
-         mainGameObject.GetComponent<Game>().HealthKitManager = healthKitManager; // Assign the HealthKitManager to the main game object
+        mainGameObject.GetComponent<Game>().HealthKitManager = healthKitManager; // Assign the HealthKitManager to the main game object
         Instantiate(mainGameObject); // Instantiate the main game object after authorization
 
     }

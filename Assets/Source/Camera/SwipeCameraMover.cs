@@ -143,11 +143,6 @@ public class SwipeCameraMover : MonoBehaviour
          // Skip update if critical components are missing
          if (targetObject == null || targetCamera == null) return;
 
-        if(transform.position != _targetYPositionObject.transform.position) // Check if the target Y position is different from the camera's position
-        {
-            Debug.Log("Camera position is set to: " + transform.position + " instead of target Y position: " + _targetYPositionObject.transform.position, this);
-        }
-
         if (startupAnimation)
         {
             StartupUpdate();

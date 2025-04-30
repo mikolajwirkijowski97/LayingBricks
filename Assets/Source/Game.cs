@@ -3,10 +3,40 @@ using Gilzoide.KeyValueStore.ICloudKvs;
 using System;
 using UnityEngine.UIElements;
 using DG.Tweening;
+using System.Runtime.CompilerServices;
 
 public class Game : MonoBehaviour
 {
-    public HealthKitManager HealthKitManager;
+private HealthKitManager healthKitManager; // Reference to the HealthKitManager
+public HealthKitManager HealthKitManager
+{
+    get => healthKitManager;
+    set
+    {
+        // 1. Unsubscribe from the previous instance (if it exists and the event is not null)
+        if (healthKitManager != null && healthKitManager.OnTotalDistanceFetched != null)
+        {
+            // Use RemoveListener for UnityEvent
+            healthKitManager.OnTotalDistanceFetched.RemoveListener(OnHKDistanceFetched);
+        }
+
+        // 2. Assign the new value
+        healthKitManager = value;
+
+        // 3. Subscribe to the new instance (if it's not null and the event is not null)
+        if (healthKitManager != null && healthKitManager.OnTotalDistanceFetched != null)
+        {
+            // Use AddListener for UnityEvent
+            healthKitManager.OnTotalDistanceFetched.AddListener(OnHKDistanceFetched);
+        }
+        // If the event could potentially be null in the 'value', you might log a warning:
+        else if (healthKitManager != null && healthKitManager.OnTotalDistanceFetched == null)
+        {
+             Debug.LogWarning("HealthKitManager assigned, but its OnTotalDistanceFetched event is null.");
+        }
+    }
+}
+
     [SerializeField] private Tower towerData;
     [SerializeField] private TowerInstancedRenderer towerInstancedRenderer;
     [SerializeField] private BrickSpawner towerBrickSpawner;
@@ -55,7 +85,8 @@ public class Game : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-
+        HealthKitManager = FindFirstObjectByType<HealthKitManager>();
+        
         if (_isIphone) {
             _StartIOS();
         } else {
