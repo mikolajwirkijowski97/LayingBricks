@@ -45,12 +45,10 @@ public class PermissionsUI : MonoBehaviour
             if (success)
             {
 
-                Debug.Log("HealthKit authorization successful.");
+                Debug.Log("HealthKit authorization successful. Commiting sudoku.");
                 CreateMainGame(); // Call the method to create the main game
                 Destroy(gameObject); // Destroy the permissions UI after authorization
-                // The above method will trigger an event which in result will trigger the tower appearing.
-
-                
+                // The above method will trigger an event which in result will trigger the tower appearing
             }
             else
             {
@@ -68,9 +66,7 @@ public class PermissionsUI : MonoBehaviour
     }
 
     void CreateMainGame(){
-        mainGameObject.GetComponent<Game>().HealthKitManager = healthKitManager; // Assign the HealthKitManager to the main game object
         Instantiate(mainGameObject); // Instantiate the main game object after authorization
-
     }
 
     void AuthorizeHealthKit()
