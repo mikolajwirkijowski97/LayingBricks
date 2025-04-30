@@ -34,7 +34,7 @@ public class PermissionsUI : MonoBehaviour
             return;
         };
 
-        AuthorizeHealthKit(); // Call the method to authorize HealthKit on start
+        InvokeRepeating("AuthorizeHealthKit" , 0f, 3f); // Call the method to authorize HealthKit on start
 
     }
 
@@ -63,10 +63,10 @@ public class PermissionsUI : MonoBehaviour
             // Show instruction to enable permissions in settings
             Debug.Log("HealthKit authorization status: Denied");
             titleLabel.text = "Enable Apple Health Access To Continue"; // Change the title label text
-            bodyLabel.text = "To calculate your brick rewards, Fit Bricks needs access to your Walking + Running Distance from Apple Health.\n"
+            bodyLabel.text = "To calculate your brick rewards, Fit Bricks needs access to your Walking + Running Distance from Apple Health."
             + " It looks like access was previously denied.\n" +
-            "1. Go to Settings > Privacy & Security > Health. \n" +
-            "2. Tap Stacking Bricks" +
+            "1. Go to Settings > Privacy & Security > Health.\n" +
+            "2. Tap Stacking Bricks\n" +
             "3. Turn ON \"Walking + Running Distance\"."; // Change the body label text
         }
         else if (status == HKAuthorizationStatus.NotDetermined){

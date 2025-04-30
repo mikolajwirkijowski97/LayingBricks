@@ -3,7 +3,6 @@ using Gilzoide.KeyValueStore.ICloudKvs;
 using System;
 using UnityEngine.UIElements;
 using DG.Tweening;
-using System.Runtime.CompilerServices;
 
 public class Game : MonoBehaviour
 {
@@ -86,7 +85,7 @@ public HealthKitManager HealthKitManager
     void Start()
     {
         HealthKitManager = FindFirstObjectByType<HealthKitManager>();
-        
+
         if (_isIphone) {
             _StartIOS();
         } else {
