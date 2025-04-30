@@ -44,22 +44,7 @@ public class Game : MonoBehaviour
             Debug.LogError("HealthKitManager reference is not set in the inspector.");
             return;
         }
-        // Get authorization for healthkit
-        healthKitManager.HealthStore.Authorize(healthKitManager.DataTypes, delegate (bool success){
-            if (success)
-            {
-                Debug.Log("HealthKit authorization successful.");
-                healthKitManager.GetTotalDistanceEver(startDate); // Call the method to fetch the total distance
-                // The above method will trigger an event which in result will trigger the tower appearing.
-
-                
-            }
-            else
-            {
-                Debug.LogError("HealthKit authorization failed.");
-            }
-        });
-
+        healthKitManager.GetTotalDistanceEver(startDate); // Call the method to fetch the total distance
     }
 
     private void CheckDistance()

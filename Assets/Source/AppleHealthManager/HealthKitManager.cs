@@ -49,8 +49,6 @@ public class HealthKitManager : MonoBehaviour
             return;
         }
 
-        // Ensure Distance Walking/Running is checked in the HealthKitDataTypes component in the Editor.
-        // (Runtime check is complex, rely on editor setup as intended by the plugin design)
 
         if (!healthStore.IsHealthDataAvailable())
         {

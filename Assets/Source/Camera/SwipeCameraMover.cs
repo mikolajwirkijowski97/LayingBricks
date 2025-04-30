@@ -143,7 +143,10 @@ public class SwipeCameraMover : MonoBehaviour
          // Skip update if critical components are missing
          if (targetObject == null || targetCamera == null) return;
 
-
+        if(transform.position != _targetYPositionObject.transform.position) // Check if the target Y position is different from the camera's position
+        {
+            Debug.Log("Camera position is set to: " + transform.position + " instead of target Y position: " + _targetYPositionObject.transform.position, this);
+        }
 
         if (startupAnimation)
         {
@@ -189,6 +192,10 @@ public class SwipeCameraMover : MonoBehaviour
         Vector3 currentCameraPos = targetCamera.transform.position;
 
         // Lerp only the Y axis to prevent unintended X/Z drift during this phase
+        if(Time.deltaTime > 0.2f) // Avoid too fast lerp during startup
+        {
+            return;
+        }
         float newY = Mathf.Lerp(currentCameraPos.y, _targetYPositionObject.transform.position.y, Time.deltaTime * moveSpeed);
         targetCamera.transform.position = new Vector3(currentCameraPos.x, newY, currentCameraPos.z);
 

@@ -1,7 +1,7 @@
 :root {
     --color-periwinkle: rgb(195, 177, 225);
-    --color-peach: #FFDAB9;
-    --color-mint: #A8E6CF;
+    --color-peach: rgb(255, 218, 185);
+    --color-mint: rgb(168, 230, 207);
     --color-mint-dark: rgb(151, 221, 195);
     --color-peach-dark: rgb(245, 206, 168);
     --color-peach-pressed: rgb(235, 193, 157);
@@ -47,6 +47,16 @@
     align-content: auto;
 }
 
+.claim-button:hover {
+    background-color: var(--color-peach-dark);
+    scale: 1.05 1.05;
+}
+
+.claim-button:active {
+    background-color: var(--color-peach-pressed);
+    scale: 0.95 0.95;
+}
+
 .claim-button {
     font-size: 20px;
     background-color: var(--color-peach);
@@ -62,14 +72,4 @@
     border-bottom-left-radius: 10px;
     flex-grow: 0;
     height: 100%;
-}
-
-.claim-button:hover {
-    background-color: var(--color-peach-dark);
-    scale: 1.05 1.05;
-}
-
-.claim-button:active {
-    background-color: var(--color-peach-pressed);
-    scale: 0.95 0.95;
 }
