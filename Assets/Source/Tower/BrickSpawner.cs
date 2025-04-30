@@ -302,7 +302,6 @@ public class BrickSpawner : MonoBehaviour
                 audioSource.Play(); // Play the sound
                 Debug.Log("The pitch of the smoke puff is: " + spp.GetComponent<AudioSource>().pitch, this);
                 Destroy(spp, 2.0f); // Destroy the smoke puff after 2 seconds
-                // NOTE TO SELF: CAMERA RESETS EVERY N SECONDS !!!!!
 
             };
 

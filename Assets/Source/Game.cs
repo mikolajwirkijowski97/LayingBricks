@@ -111,7 +111,7 @@ public class Game : MonoBehaviour
         }
     }
 
-    private void _FetchCalculateUnclaimedBrickSpoofed(int distance)
+    private void _FetchCalculateUnclaimedBrickSpoofed()
     {
         // Spoofed data for testing purposes
         UnclaimedBricks = 21; // Set unclaimed bricks to a fixed value for testing
@@ -122,7 +122,7 @@ public class Game : MonoBehaviour
         if (_isIphone) {
             _FetchCalculateUnclaimedBrickIOS(distance); // Fetch and calculate unclaimed bricks for iOS
         } else {
-            _FetchCalculateUnclaimedBrickSpoofed(distance); // Spoofed data for testing
+            _FetchCalculateUnclaimedBrickSpoofed(); // Spoofed data for testing
         }  
     }
 

@@ -1,13 +1,14 @@
-using Unity.VisualScripting; // Can likely be removed if not used elsewhere
+using System;
 using UnityEngine;
 using UnityEngine.EventSystems; // Required for checking UI interaction
-
+// using Unity.VisualScripting; // Removed as likely unused
 
 /// <summary>
 /// Moves the camera vertically based on vertical touch swipes,
 /// rotates it horizontally around a target object based on horizontal touch swipes,
-/// and zooms in/out based on pinch gestures or mouse scroll wheel.
+/// and zooms in/out based on pinch gestures.
 /// Uses single-finger input for swipe/rotate, two-finger for pinch.
+/// MOBILE ONLY - Mouse input removed.
 /// </summary>
 public class SwipeCameraMover : MonoBehaviour
 {
@@ -27,21 +28,18 @@ public class SwipeCameraMover : MonoBehaviour
     [Tooltip("How sensitive the horizontal rotation is to the swipe speed.")]
     [SerializeField] private float rotationSensitivity = 0.5f;
 
-    // --- NEW: Zoom Settings ---
     [Header("Zoom Settings")]
-    [Tooltip("How sensitive the zoom is to pinch gestures or mouse scroll.")]
+    [Tooltip("How sensitive the zoom is to pinch gestures.")]
     [SerializeField] private float zoomSensitivity = 0.5f;
     [Tooltip("The minimum distance the camera can be from the target object.")]
     [SerializeField] private float minZoomDistance = 5f;
     [Tooltip("The maximum distance the camera can be from the target object.")]
     [SerializeField] private float maxZoomDistance = 50f;
-    [Tooltip("Sensitivity multiplier for mouse scroll wheel zoom.")]
-    [SerializeField] private float mouseZoomMultiplier = 10f; // Adjust for desired mouse scroll speed
-    // --- End NEW ---
+    // Removed: mouseZoomMultiplier
 
     [Header("Clamping")]
     [Tooltip("Optional: Clamp Y position between min and max values.")]
-    [SerializeField] private bool clampYPosition = false;
+    [SerializeField] private bool clampYPosition = true;
     [SerializeField] private float minYPosition = 0f;
     private float maxYPosition = 100f; // Will be calculated from Tower
     [SerializeField] [Tooltip("Optional: Maximum Y offset above calculated tower height.")]
@@ -52,40 +50,44 @@ public class SwipeCameraMover : MonoBehaviour
 
     // Internal State
     private bool startupAnimation = true;
-    private GameObject _targetYPositionObject; // Renamed for clarity
-    private Vector2 touchZeroPrevPos; // For pinch zoom calculation
-    private Vector2 touchOnePrevPos;  // For pinch zoom calculation
-
+    private GameObject _targetYPositionObject;
 
     void Awake()
     {
         if (towerData != null) {
              towerData.OnParametersChanged += UpdateInternals; // Subscribe to tower data changes
+             towerData.OnParametersChanged += GoToTop; // Go to top when tower data changes
         } else {
              Debug.LogWarning("SwipeCameraMover: TowerData not assigned in Awake. Max Y position might not update dynamically.", this);
         }
-       
         UpdateInternals(); // Initial setup
+        GoToTop(); // Start at the top of the tower
+    }
+
+    void GoToTop() {
+        var targetY = _targetYPositionObject.transform.position; // Set target Y to max Y position
+        if(Math.Abs(targetY.y - maxYPosition) < 1f) return; // Avoid unnecessary updates
+
+        targetY.y = maxYPosition;
+        Debug.Log("SwipeCameraMover: GoToTop called. Target Y set to max Y position: " + targetY.y, this);
+        _targetYPositionObject.transform.position = targetY; // Set target Y object to max Y position
+        startupAnimation = true; // Reset startup animation flag
     }
 
     void UpdateInternals()
     {
-        startupAnimation = true; // Reset startup animation flag
 
         // --- Tower Data Check ---
         if (towerData != null)
         {
             TowerGeometryGenerator towerGeometryGenerator = new TowerGeometryGenerator(towerData);
             maxYPosition = towerGeometryGenerator.GetTopLevelHeight() + maxYOffset;
-             Debug.Log($"SwipeCameraMover: Max camera Y Position calculated: {maxYPosition}", this);
+            Debug.Log($"SwipeCameraMover: Max camera Y Position calculated: {maxYPosition}", this);
         }
         else
         {
             Debug.LogWarning("SwipeCameraMover: TowerData not found or assigned. Max Y position not calculated.", this);
-             // Optionally set a default maxYPosition here if needed when towerData is null
-             // maxYPosition = 100f; // Example default
         }
-
 
         if (targetCamera == null)
         {
@@ -113,7 +115,6 @@ public class SwipeCameraMover : MonoBehaviour
             Debug.LogWarning($"SwipeCameraMover: minYPosition ({minYPosition}) was greater than maxYPosition ({maxYPosition}) while clamping is enabled. Setting minYPosition to maxYPosition.", this);
         }
 
-        // --- NEW: Zoom Sanity Check ---
         if (maxZoomDistance < minZoomDistance)
         {
              float tempMax = maxZoomDistance;
@@ -121,35 +122,19 @@ public class SwipeCameraMover : MonoBehaviour
              minZoomDistance = tempMax; // Swap them
              Debug.LogWarning($"SwipeCameraMover: minZoomDistance was greater than maxZoomDistance. They have been swapped. Min: {minZoomDistance}, Max: {maxZoomDistance}", this);
         }
-        // --- End NEW ---
 
 
         // --- Initialize Target Y GameObject ---
         if (_targetYPositionObject == null) // Only create if it doesn't exist
         {
              _targetYPositionObject = new GameObject("TargetYPosition_Internal");
+             Instantiate(_targetYPositionObject); // Instantiate in the scene
              _targetYPositionObject.hideFlags = HideFlags.HideAndDontSave; // Prevent cluttering the hierarchy/saving
         }
-        
-        Vector3 initialCamPosition = targetCamera.transform.position;
 
-        // Set target Y for startup animation
-        Vector3 targetYPos = initialCamPosition;
-        // Check if initial Y is already outside calculated bounds during startup
-        if (clampYPosition) {
-             targetYPos.y = Mathf.Clamp(maxYPosition, minYPosition, maxYPosition); // Start clamped to valid range
-        } else {
-             targetYPos.y = maxYPosition; // Start at the top if not clamping
-        }
-       
-        _targetYPositionObject.transform.position = targetYPos; // Initialize target Y position object
+        ClampCameraPosition(); // Apply zoom clamping and re-apply Y clamping
 
-
-        // Ensure initial Y position is clamped if needed
-        // Also apply initial zoom clamping
-        ClampCameraPosition(); // Use a helper function for clarity
-
-         Debug.Log($"SwipeCameraMover: Internals Updated. Startup animation: {startupAnimation}, Clamped Y: {clampYPosition} ({minYPosition} - {maxYPosition}), Clamped Zoom: ({minZoomDistance} - {maxZoomDistance})", this);
+         Debug.Log($"SwipeCameraMover: Internals Updated. Startup animation flag: {startupAnimation}, Initial Target Y set to: {_targetYPositionObject.transform.position.y}, Clamped Y: {clampYPosition} ({minYPosition} - {maxYPosition}), Clamped Zoom: ({minZoomDistance} - {maxZoomDistance})", this);
     }
 
 
@@ -158,12 +143,6 @@ public class SwipeCameraMover : MonoBehaviour
          // Skip update if critical components are missing
          if (targetObject == null || targetCamera == null) return;
 
-         // --- NEW: Check if interacting with UI ---
-         if (IsPointerOverUIObject())
-         {
-             return; // Don't process swipes/zooms if interacting with UI
-         }
-         // --- End NEW ---
 
 
         if (startupAnimation)
@@ -172,18 +151,22 @@ public class SwipeCameraMover : MonoBehaviour
         }
         else
         {
+            // Check if interacting with UI - Ignore touches over UI
+            if (IsPointerOverUIObject())
+            {
+                return; // Don't process swipes/zooms if interacting with UI
+            }
             MainUpdate();
         }
     }
 
-     // --- NEW: UI Check Function ---
     /// <summary>
-    /// Checks if the current pointer (touch or mouse) is over a UI element.
+    /// Checks if any current touch pointer is over a UI element.
     /// </summary>
-    /// <returns>True if the pointer is over UI, false otherwise.</returns>
+    /// <returns>True if a touch pointer is over UI, false otherwise.</returns>
     private bool IsPointerOverUIObject()
     {
-        // Check for touch input first
+        // Check for touch input
         if (Input.touchCount > 0)
         {
             for (int i = 0; i < Input.touchCount; i++)
@@ -194,26 +177,24 @@ public class SwipeCameraMover : MonoBehaviour
                 }
             }
         }
-        // Check for mouse input (for editor/desktop)
-        else if (EventSystem.current.IsPointerOverGameObject())
-        {
-            return true;
-        }
+        // Removed mouse check: else if (EventSystem.current.IsPointerOverGameObject()) { return true; }
         return false;
     }
-     // --- End NEW ---
 
 
     void StartupUpdate()
     {
-        // Slowly move the camera to the target Y position (keeping X/Z)
-        Vector3 targetPosition = targetCamera.transform.position; // Start with current X/Z
-        targetPosition.y = _targetYPositionObject.transform.position.y; // Use target Y
+        // Slowly move the camera towards the target Y position (keeping X/Z)
+        // The target Y position is now initialized to the camera's starting Y (or clamped starting Y)
+        Vector3 currentCameraPos = targetCamera.transform.position;
 
-        targetCamera.transform.position = Vector3.Lerp(targetCamera.transform.position, targetPosition, Time.deltaTime * moveSpeed);
+        // Lerp only the Y axis to prevent unintended X/Z drift during this phase
+        float newY = Mathf.Lerp(currentCameraPos.y, _targetYPositionObject.transform.position.y, Time.deltaTime * moveSpeed);
+        targetCamera.transform.position = new Vector3(currentCameraPos.x, newY, currentCameraPos.z);
 
-        // Check if the camera has reached the target Y position (focus on Y)
-        if (Mathf.Abs(targetCamera.transform.position.y - targetPosition.y) < 0.1f)
+        Debug.Log("SwipeCameraMover: Startup animation in progress. Current Y: " + newY, this);
+
+        if (Mathf.Abs(targetCamera.transform.position.y - _targetYPositionObject.transform.position.y) < 0.01f) // Reduced threshold for faster transition
         {
             TransitionToMainUpdate();
         }
@@ -227,7 +208,7 @@ public class SwipeCameraMover : MonoBehaviour
         currentTargetPos.y = targetCamera.transform.position.y;
         _targetYPositionObject.transform.position = currentTargetPos;
 
-        // Ensure final position after startup is clamped
+        // Ensure final position after startup is clamped (redundant safety check)
         ClampCameraPosition();
 
         Debug.Log("SwipeCameraMover: Startup complete. Transitioning to main update.");
@@ -235,9 +216,8 @@ public class SwipeCameraMover : MonoBehaviour
 
     void MainUpdate()
     {
-        // Handle Touch Input (Mobile) OR Mouse Input (Desktop/Editor)
+        // Handle Touch Input (Mobile ONLY)
         HandleTouchInput();
-        HandleMouseInput(); // Add mouse input handling
 
         // Apply smooth vertical movement (only affects Y) AFTER input is processed
         ApplySmoothVerticalMovement();
@@ -255,16 +235,21 @@ public class SwipeCameraMover : MonoBehaviour
             Touch touch = Input.GetTouch(0);
 
             // Optional: Check if the touch just began over UI, might prevent accidental swipes
-            // if (touch.phase == TouchPhase.Began && IsPointerOverUIObject()) return;
+            // if (touch.phase == TouchPhase.Began && IsPointerOverUIObject()) return; // Already checked globally at start of Update
 
             if (touch.phase == TouchPhase.Moved)
             {
                 // --- Calculate Horizontal Rotation ---
+                // Adjust sensitivity based on screen width? Might feel better.
+                // float horizontalAngle = -touch.deltaPosition.x * rotationSensitivity * (1f / Screen.width) * Time.deltaTime;
                 float horizontalAngle = -touch.deltaPosition.x * rotationSensitivity * Time.deltaTime;
                 targetCamera.transform.RotateAround(targetObject.position, Vector3.up, horizontalAngle);
 
                 // --- Calculate Vertical Movement Target ---
+                // Adjust sensitivity based on screen height? Might feel better.
+                // float verticalMovement = -touch.deltaPosition.y * moveSensitivity * (1f / Screen.height) * Time.deltaTime;
                 float verticalMovement = -touch.deltaPosition.y * moveSensitivity * Time.deltaTime;
+
                 // Modify the target position, which ApplySmoothVerticalMovement will follow
                 Vector3 targetPos = _targetYPositionObject.transform.position;
                 targetPos.y += verticalMovement;
@@ -272,87 +257,52 @@ public class SwipeCameraMover : MonoBehaviour
                 // Apply Y clamping directly to the target position if enabled
                  if (clampYPosition)
                  {
-                     targetPos.y = Mathf.Clamp(targetPos.y, minYPosition, maxYPosition);
+                      targetPos.y = Mathf.Clamp(targetPos.y, minYPosition, maxYPosition);
                  }
                 _targetYPositionObject.transform.position = targetPos;
-
             }
         }
-        // --- NEW: Pinch Zoom Logic (Two Fingers) ---
+        // --- Pinch Zoom Logic (Two Fingers) ---
         else if (Input.touchCount == 2)
         {
             Touch touchZero = Input.GetTouch(0);
             Touch touchOne = Input.GetTouch(1);
 
-            // Optional: Check if touches began over UI
+            // Optional: Check if touches began over UI - Already checked globally at start of Update
             // if ((touchZero.phase == TouchPhase.Began || touchOne.phase == TouchPhase.Began) && IsPointerOverUIObject()) return;
-
 
             // Find the position in the previous frame of each touch.
             if (touchZero.phase == TouchPhase.Moved || touchOne.phase == TouchPhase.Moved)
             {
-                 // Use stored previous positions if available, otherwise use current pos minus delta
-                Vector2 touchZeroPrevPosActual = touchZero.position - touchZero.deltaPosition;
-                Vector2 touchOnePrevPosActual = touchOne.position - touchOne.deltaPosition;
+                 // Calculate previous positions based on current position and delta
+                 Vector2 touchZeroPrevPosActual = touchZero.position - touchZero.deltaPosition;
+                 Vector2 touchOnePrevPosActual = touchOne.position - touchOne.deltaPosition;
 
+                 // Find the magnitude of the vector (distance) between the touches in each frame.
+                 float prevTouchDeltaMag = (touchZeroPrevPosActual - touchOnePrevPosActual).magnitude;
+                 float touchDeltaMag = (touchZero.position - touchOne.position).magnitude;
 
-                // Find the magnitude of the vector (distance) between the touches in each frame.
-                float prevTouchDeltaMag = (touchZeroPrevPosActual - touchOnePrevPosActual).magnitude;
-                float touchDeltaMag = (touchZero.position - touchOne.position).magnitude;
+                 // Find the difference in the distances between each frame.
+                 float deltaMagnitudeDiff = touchDeltaMag - prevTouchDeltaMag; // Positive when fingers move apart (zoom out)
 
-                // Find the difference in the distances between each frame.
-                float deltaMagnitudeDiff = touchDeltaMag - prevTouchDeltaMag; // Inverted: smaller distance = positive diff = zoom in
+                 // Calculate the zoom amount based on sensitivity and frame rate
+                 // Note: Positive deltaMagnitudeDiff should move camera AWAY from target (zoom out)
+                 // Need to invert the sign or adjust the direction. Let's move along negative direction.
+                 float zoomAmount = deltaMagnitudeDiff * zoomSensitivity * Time.deltaTime;
 
-                // Calculate the zoom amount based on sensitivity and frame rate
-                float zoomAmount = deltaMagnitudeDiff * zoomSensitivity * Time.deltaTime;
+                 // Calculate the direction FROM the target object TO the camera
+                 Vector3 directionFromTarget = (targetCamera.transform.position - targetObject.position).normalized;
+                 if (directionFromTarget == Vector3.zero) { // Handle case where camera is exactly at target
+                     directionFromTarget = targetCamera.transform.forward; // Use camera's forward as fallback
+                 }
 
-                // Calculate the direction towards the target object
-                Vector3 zoomDirection = (targetObject.position - targetCamera.transform.position).normalized;
+                 // Move the camera along this direction (away from target for zoom out, towards for zoom in)
+                 targetCamera.transform.position += directionFromTarget * zoomAmount;
 
-                // Move the camera
-                targetCamera.transform.position += zoomDirection * zoomAmount;
-
-                 // Update previous touch positions for the next frame - **Important for smooth zoom**
-                 // Note: This logic assumes HandleTouchInput is called every frame where touchCount == 2.
-                 // Storing them globally might be more robust if phases change rapidly, but this often works.
-                 // We don't use the class members `touchZeroPrevPos`, `touchOnePrevPos` here,
-                 // relying on deltaPosition provides the previous frame's position directly.
+                 // Clamping is handled globally in ClampCameraPosition() called in MainUpdate
             }
-
-
         }
-        // --- End NEW ---
     }
-
-
-    // --- NEW: Mouse Input Handling ---
-    void HandleMouseInput()
-    {
-        // Use Mouse Scroll Wheel for Zooming (Alternative/Desktop)
-        float scroll = Input.GetAxis("Mouse ScrollWheel");
-        if (Mathf.Abs(scroll) > 0.01f) // Check if there's noticeable scroll input
-        {
-             // Calculate zoom amount - multiply by extra factor for better control
-            float zoomAmount = scroll * zoomSensitivity * mouseZoomMultiplier * Time.deltaTime; // Inverted scroll for natural feel
-
-
-            // Calculate the direction towards the target object
-            Vector3 zoomDirection = (targetObject.position - targetCamera.transform.position).normalized;
-
-
-            // Move the camera
-            targetCamera.transform.position += zoomDirection * zoomAmount;
-
-
-            // Note: Clamping is handled globally in ClampCameraPosition() called in MainUpdate
-        }
-
-
-         // Optional: Add mouse drag for rotation/pan if needed (similar to touch logic)
-         // if (Input.GetMouseButton(0)) { ... } // Check for left mouse button hold
-         // if (Input.GetMouseButton(1)) { ... } // Check for right mouse button hold etc.
-    }
-    // --- End NEW ---
 
     /// <summary>
     /// Smoothly moves the camera's Y position towards the target Y position.
@@ -369,69 +319,86 @@ public class SwipeCameraMover : MonoBehaviour
             float newY = Mathf.Lerp(currentPos.y, targetY, Time.deltaTime * moveSpeed);
             targetCamera.transform.position = new Vector3(currentPos.x, newY, currentPos.z);
         }
-        // Optional: Snap directly if very close
-        else if (Mathf.Abs(currentPos.y - targetY) > 0f) {
+        // Optional: Snap directly if very close to prevent micro-movements
+        else if (currentPos.y != targetY) // Check non-equality instead of Abs > 0f for precision
+        {
              targetCamera.transform.position = new Vector3(currentPos.x, targetY, currentPos.z);
         }
     }
 
-     // --- NEW: Centralized Clamping Function ---
-     /// <summary>
-     /// Clamps the camera's position based on Y constraints and zoom distance constraints.
-     /// </summary>
+/// <summary>
+    /// Clamps the camera's position based on HORIZONTAL (XZ) distance constraints
+    /// and VERTICAL (Y) constraints independently.
+    /// </summary>
     void ClampCameraPosition()
     {
-         if (targetCamera == null || targetObject == null) return;
+        if (targetCamera == null || targetObject == null) return;
 
+        Vector3 currentPos = targetCamera.transform.position;
+        Vector3 targetPos = targetObject.position; // Cache target position
 
-         Vector3 currentPos = targetCamera.transform.position;
-         Vector3 targetPos = targetObject.position;
+        // --- 1. Horizontal (XZ) Distance Clamping ---
+        Vector3 offset = currentPos - targetPos;
+        Vector3 horizontalOffset = offset;
+        horizontalOffset.y = 0; // Project onto the XZ plane
 
+        float currentHorizontalDistanceSqr = horizontalOffset.sqrMagnitude; // Use squared for efficiency
+        float minZoomDistSqr = minZoomDistance * minZoomDistance;
+        float maxZoomDistSqr = maxZoomDistance * maxZoomDistance;
 
-         // 1. Clamp Y Position
-         if (clampYPosition)
-         {
+        // Check if clamping is needed (and avoid division by zero if distance is ~0)
+        if (currentHorizontalDistanceSqr < minZoomDistSqr - 0.001f || currentHorizontalDistanceSqr > maxZoomDistSqr + 0.001f)
+        {
+            float currentHorizontalDistance = Mathf.Sqrt(currentHorizontalDistanceSqr);
+            float clampedHorizontalDistance = Mathf.Clamp(currentHorizontalDistance, minZoomDistance, maxZoomDistance);
+
+            if (currentHorizontalDistance > 0.001f) // Check magnitude before normalizing
+            {
+                Vector3 horizontalDirection = horizontalOffset / currentHorizontalDistance; // Normalized horizontal direction
+                Vector3 clampedHorizontalPosition = targetPos + horizontalDirection * clampedHorizontalDistance;
+
+                // Apply the clamped XZ position, keeping the original Y
+                currentPos.x = clampedHorizontalPosition.x;
+                currentPos.z = clampedHorizontalPosition.z;
+            }
+            else
+            {
+                // Camera is directly above or below the target. Avoid NaN.
+                // Place it at min distance along camera's local right (or forward) axis on the XZ plane.
+                Vector3 fallbackHorizontalDir = targetCamera.transform.right;
+                fallbackHorizontalDir.y = 0;
+                fallbackHorizontalDir.Normalize();
+                if (fallbackHorizontalDir == Vector3.zero) fallbackHorizontalDir = Vector3.right; // Absolute fallback
+
+                Vector3 clampedHorizontalPosition = targetPos + fallbackHorizontalDir * minZoomDistance;
+                currentPos.x = clampedHorizontalPosition.x;
+                currentPos.z = clampedHorizontalPosition.z;
+                 Debug.LogWarning("SwipeCameraMover: Camera was directly above/below target during horizontal clamping. Applying minimal horizontal offset.", this);
+            }
+        }
+
+        // --- 2. Vertical (Y) Clamping ---
+        if (clampYPosition)
+        {
             currentPos.y = Mathf.Clamp(currentPos.y, minYPosition, maxYPosition);
+
             // Also clamp the target Y object to prevent it drifting out of bounds
+            // when user stops swiping at the vertical limit.
             Vector3 yTargetPos = _targetYPositionObject.transform.position;
-            yTargetPos.y = Mathf.Clamp(yTargetPos.y, minYPosition, maxYPosition);
-            _targetYPositionObject.transform.position = yTargetPos;
-         }
+            float clampedYTarget = Mathf.Clamp(yTargetPos.y, minYPosition, maxYPosition);
+            // Only update if it actually needs clamping to avoid overriding during smooth movement
+            if (yTargetPos.y != clampedYTarget) {
+                 _targetYPositionObject.transform.position = new Vector3(yTargetPos.x, clampedYTarget, yTargetPos.z);
+            }
+        }
 
-
-         // 2. Clamp Zoom Distance
-         Vector3 directionToTarget = currentPos - targetPos;
-         float currentDistance = directionToTarget.magnitude;
-
-
-         if (currentDistance < minZoomDistance || currentDistance > maxZoomDistance)
-         {
-             float clampedDistance = Mathf.Clamp(currentDistance, minZoomDistance, maxZoomDistance);
-             // Calculate the clamped position by moving along the direction vector
-             // Normalize the direction vector (or reuse if already normalized from zoom calc)
-             Vector3 directionNormalized = directionToTarget.normalized;
-             // Special case: If camera is exactly at target, prevent division by zero/NaN direction.
-             // Place it at min distance slightly offset (e.g., upwards).
-             if (directionNormalized == Vector3.zero)
-             {
-                 directionNormalized = Vector3.up; // Or Vector3.forward, etc.
-                 Debug.LogWarning("SwipeCameraMover: Camera was exactly at target position during clamping. Applying minimal offset.", this);
-             }
-
-
-             currentPos = targetPos + directionNormalized * clampedDistance;
-         }
-
-
-         // Apply the potentially clamped position
-         // Only update if the position actually changed to avoid unnecessary assignments
-         if (targetCamera.transform.position != currentPos)
-         {
-              targetCamera.transform.position = currentPos;
-         }
+        // --- 3. Apply the Final Clamped Position ---
+        // Use sqrMagnitude for efficient comparison to avoid tiny adjustments causing constant updates
+        if ((targetCamera.transform.position - currentPos).sqrMagnitude > 0.0001f)
+        {
+             targetCamera.transform.position = currentPos;
+        }
     }
-     // --- End NEW ---
-
 
     void OnDestroy()
     {
