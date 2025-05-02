@@ -73,7 +73,7 @@ public class HealthKitManager : MonoBehaviour
         DateTimeOffset endDate = DateTimeOffset.UtcNow; // Up to the current moment
 
         Debug.Log($"Attempting to read total {dataType} from {startDate} to {endDate}");
-
+        healthStore.Authorize(dataTypes);
         // Use ReadCombinedQuantitySamples as it directly returns the sum
         healthStore.ReadCombinedQuantitySamples(
             dataType,
