@@ -37,7 +37,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _FogEnd: 200
+    - _FogEnd: 250
     - _FogFadeOutHeight: 1500
     - _FogStart: 180
     m_Colors:

@@ -155,14 +155,6 @@ public class TowerInstancedRenderer : MonoBehaviour
         // Basic checks for essential components
         if (_geometryGenerator == null || _brickMesh == null || _brickMaterial == null) return;
 
-        // Set the shadow casting cylinder size
-        if (_shadowCastingCylinderPrefab != null)
-        {
-            float cylinderHeight = _geometryGenerator.GetTopLevelHeight() + 0.25f;
-            float cylinderDiameter = _tower.Radius * 2f + 2*_tower.BrickDepth;
-            _shadowCastingCylinderPrefab.transform.localScale = new Vector3(cylinderDiameter, cylinderHeight, cylinderDiameter);
-        }
-
         // Ensure geometry caches are up-to-date (generator handles internal check)
         _geometryGenerator.RebuildCachesIfNeeded();
 
@@ -222,6 +214,8 @@ public class TowerInstancedRenderer : MonoBehaviour
     {
         // Tell the generator its source data changed
         _geometryGenerator?.MarkDirty();
+
+        
         // Dont rebuild batches for now.
         // Mark that our rendering batches need to be rebuilt based on new geometry
         //MarkBatchesDirty();
@@ -297,6 +291,15 @@ public class TowerInstancedRenderer : MonoBehaviour
     /// </summary>
     private void RebuildBatchesIfNeeded()
     {
+
+        // Set the shadow casting cylinder size
+        if (_shadowCastingCylinderPrefab != null)
+        {
+            float cylinderHeight = _geometryGenerator.GetTopLevelHeight() + 0.25f;
+            float cylinderDiameter = _tower.Radius * 2f + 2*_tower.BrickDepth;
+            _shadowCastingCylinderPrefab.transform.localScale = new Vector3(cylinderDiameter, cylinderHeight, cylinderDiameter);
+        }
+
         if (!_needsBatchRebuild || _geometryGenerator == null) return;
 
         ClearBatches(); // Clear previous batches before creating new ones

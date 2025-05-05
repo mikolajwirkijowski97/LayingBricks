@@ -62,6 +62,8 @@ public class TowerGeometryGenerator
              return;
         }
 
+        
+
         Debug.Log($"Rebuilding caches for Tower: {_tower.name}");
         // Clear all existing caches before recalculating
         _levelStartYCache.Clear();

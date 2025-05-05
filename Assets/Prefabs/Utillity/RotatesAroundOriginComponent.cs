@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class RotatesAroundOriginComponent : MonoBehaviour
 {
-    private float rotationSpeed = 2f;
+    private float rotationSpeed = 0.3f;
     private bool speedRandom = true; 
 
     void Start()
