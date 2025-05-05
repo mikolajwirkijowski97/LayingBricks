@@ -6,8 +6,6 @@ public class PermissionsUI : MonoBehaviour
 {
     private VisualElement root;
     private Button allowButton;
-    private Label titleLabel;
-    private Label bodyLabel;
 
 
     [SerializeField] private GameObject mainGameObject;
@@ -18,8 +16,7 @@ public class PermissionsUI : MonoBehaviour
     {
 
         var kvs = new ICloudKeyValueStore();
-
-        if(kvs.TryGetBool("FirstLaunch", out bool isFirstLaunch)){
+        if(Application.platform != RuntimePlatform.IPhonePlayer || kvs.TryGetBool("FirstLaunch", out bool isFirstLaunch)){
             GoToMainGame();
             return;
         }
@@ -34,14 +31,11 @@ public class PermissionsUI : MonoBehaviour
 
         root = GetComponent<UIDocument>().rootVisualElement;
         allowButton = root.Q<Button>("AllowButton"); // Get the button from the UI document
-        titleLabel = root.Q<Label>("TitleLabel"); // Get the title label from the UI document
-        bodyLabel = root.Q<Label>("BodyLabel"); // Get the body label from the UI document
         allowButton.SetEnabled(false); // Disable the button initially
         Debug.Log(allowButton); // Log the button for debugging
 
         allowButton.clicked += () => {
             AuthorizeHealthKit(); // Call the method to authorize HealthKit when the button is clicked
-            return;
         };
 
         InvokeRepeating("AuthorizeHealthKit" , 0f, 3f); // Call the method to authorize HealthKit on start

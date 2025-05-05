@@ -54,6 +54,13 @@ public class SwipeCameraMover : MonoBehaviour
 
     void Awake()
     {
+
+        if(Application.platform != RuntimePlatform.IPhonePlayer)
+        {
+            moveSensitivity *= 10f; // Increase sensitivity for non-mobile platforms
+            rotationSensitivity *= 10f; // Increase sensitivity for non-mobile platforms
+        }
+
         if (towerData != null) {
              towerData.OnParametersChanged += UpdateInternals; // Subscribe to tower data changes
              towerData.OnParametersChanged += GoToTop; // Go to top when tower data changes

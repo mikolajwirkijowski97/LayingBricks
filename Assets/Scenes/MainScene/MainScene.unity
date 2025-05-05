@@ -261,7 +261,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mainGameObject: {fileID: 2160364055974710179, guid: 14d235168e89bd142a5e918e936006e3, type: 3}
-  healthKitManager: {fileID: 554917443}
 --- !u!1 &554917442
 GameObject:
   m_ObjectHideFlags: 0
