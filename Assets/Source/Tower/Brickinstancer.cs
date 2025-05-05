@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.iOS;
+using UnityEngine.Rendering;
 
 /// <summary>
 /// Responsible for rendering the bricks of a Tower procedural structure using GPU instancing.
@@ -23,6 +23,10 @@ public class TowerInstancedRenderer : MonoBehaviour
     [SerializeField]
     [Tooltip("The prefab used for each brick. Must contain a MeshFilter and MeshRenderer for instancing.")]
     private GameObject _brickPrefab;
+
+    [SerializeField]
+    [Tooltip("The shape for shadow casting.")]
+    private GameObject _shadowCastingCylinderPrefab;
 
     // --- Private Fields ---
     private TowerGeometryGenerator _geometryGenerator; // Instance to handle geometry calculation and caching
@@ -128,11 +132,20 @@ public class TowerInstancedRenderer : MonoBehaviour
              if (_geometryGenerator == null) InitializeGeometryGenerator();
              MarkBatchesDirty();
         }
+        _shadowCastingCylinderPrefab = Instantiate(_shadowCastingCylinderPrefab); // Instantiate shadow casting cylinder prefab
+        _shadowCastingCylinderPrefab.transform.SetParent(transform); // Set parent to this object
+        _shadowCastingCylinderPrefab.transform.localPosition = Vector3.zero; // Reset position
+
     }
 
     void OnDisable()
     {
         if (_tower != null) _tower.OnParametersChanged -= HandleTowerParametersChanged;
+        // delete _shadowCastingCylinderPrefab; // Destroy shadow casting cylinder prefab
+        if (_shadowCastingCylinderPrefab != null)
+        {
+            Destroy(_shadowCastingCylinderPrefab); // Destroy the shadow casting cylinder prefab
+        }
     }
 
     void Update()
@@ -141,6 +154,14 @@ public class TowerInstancedRenderer : MonoBehaviour
 
         // Basic checks for essential components
         if (_geometryGenerator == null || _brickMesh == null || _brickMaterial == null) return;
+
+        // Set the shadow casting cylinder size
+        if (_shadowCastingCylinderPrefab != null)
+        {
+            float cylinderHeight = _geometryGenerator.GetTopLevelHeight() + 0.25f;
+            float cylinderDiameter = _tower.Radius * 2f + 2*_tower.BrickDepth;
+            _shadowCastingCylinderPrefab.transform.localScale = new Vector3(cylinderDiameter, cylinderHeight, cylinderDiameter);
+        }
 
         // Ensure geometry caches are up-to-date (generator handles internal check)
         _geometryGenerator.RebuildCachesIfNeeded();
@@ -151,6 +172,9 @@ public class TowerInstancedRenderer : MonoBehaviour
         // Render using the prepared batches
         if (_persistentBatches.Count == 0 && _needsBatchRebuild) return; // Avoid drawing if dirty and rebuild failed
 
+        RenderParams rp = new RenderParams(_brickMaterial);
+        rp.shadowCastingMode = ShadowCastingMode.Off; // Set shadow casting mode
+        
         foreach (Matrix4x4[] batchToDraw in _persistentBatches)
         {
             // If the last transform in batchToDraw is further than maxDistance, skip drawing
@@ -165,7 +189,7 @@ public class TowerInstancedRenderer : MonoBehaviour
 
             if (batchToDraw != null && batchToDraw.Length > 0 )
             {
-                Graphics.DrawMeshInstanced(_brickMesh, 0, _brickMaterial, batchToDraw, batchToDraw.Length);
+                Graphics.RenderMeshInstanced(rp, _brickMesh, 0, batchToDraw, batchToDraw.Length);
             }
         }
     }
