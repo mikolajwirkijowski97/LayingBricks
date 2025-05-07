@@ -243,7 +243,7 @@ public class BrickSpawner : MonoBehaviour
             // 2. Append the Move animation (starts after the sequence delay)
             brickSequence.Append(brickGO.transform.DOMove(position, animationDuration)
                                         .SetEase(Ease.InSine)); // Brick falls into place
-
+                    
             // 4. Join the Shake Rotation animation to also run concurrently
             brickSequence.Join(brickGO.transform.DOShakeRotation(animationDuration, Vector3.one*ROTATION_SPEED, 10, 90, false));
                                         // Parameters: duration, strength, vibrato, randomness, fadeout(false)

@@ -914,7 +914,7 @@ MonoBehaviour:
   zoomSensitivity: 0.5
   minZoomDistance: 50
   maxZoomDistance: 70
-  invertZoomDirection: 0
+  invertZoomDirection: 1
   fixedDownwardPitchAngle: 9
   clampYPosition: 1
   minYPosition: 15
@@ -1138,6 +1138,10 @@ PrefabInstance:
       value: 200
       objectReference: {fileID: 0}
     - target: {fileID: 8164063314925076727, guid: ab7d0fdd4941b27438e51ae2dbffef6d, type: 3}
+      propertyPath: faceOutwards
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8164063314925076727, guid: ab7d0fdd4941b27438e51ae2dbffef6d, type: 3}
       propertyPath: numberOfObjects
       value: 30
       objectReference: {fileID: 0}
@@ -1263,7 +1267,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 54498434153555680, guid: ab7d0fdd4941b27438e51ae2dbffef6d, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 114.2
+      value: 100
       objectReference: {fileID: 0}
     - target: {fileID: 54498434153555680, guid: ab7d0fdd4941b27438e51ae2dbffef6d, type: 3}
       propertyPath: m_LocalPosition.z
@@ -1311,7 +1315,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8164063314925076727, guid: ab7d0fdd4941b27438e51ae2dbffef6d, type: 3}
       propertyPath: innerRadius
-      value: 80
+      value: 140
       objectReference: {fileID: 0}
     - target: {fileID: 8164063314925076727, guid: ab7d0fdd4941b27438e51ae2dbffef6d, type: 3}
       propertyPath: outerRadius

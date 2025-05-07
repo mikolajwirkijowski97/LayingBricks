@@ -230,7 +230,8 @@ public class VolumeSpawner : MonoBehaviour
             Quaternion spawnRotation = Quaternion.identity;
             if (randomizeYRotation)
             {
-                spawnRotation.y = Random.Range(0f,360f); // Random Y rotation
+                spawnRotation = Quaternion.Euler(0, Random.Range(0f, 360f), 0); // Random Y rotation
+
             }
             else if (faceOutwards)
             {
@@ -255,6 +256,7 @@ public class VolumeSpawner : MonoBehaviour
 
             // --- Instantiate, Scale & Parent ---
             GameObject spawnedObject = Instantiate(prefabToUse, spawnPosition, spawnRotation, transform);
+            spawnedObject.transform.rotation = spawnRotation; // Set rotation after instantiation because it doesnt work otherwise idk
             spawnedObject.name = $"{prefabToUse.name}_{i}"; // Simple naming
             spawnedObject.transform.localScale = prefabToUse.transform.localScale * scaleFactor;
 
