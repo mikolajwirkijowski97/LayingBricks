@@ -568,12 +568,12 @@ MonoBehaviour:
   _height: 1
   _isLastLevelOrdered: 1
   _totalBricks: 0
-  _radius: 5
-  _circumference: 31.415928
-  _brickDepth: 0.31
-  _minBrickHeight: 0.35
-  _maxBrickHeight: 0.62
-  _bricksPerLevel: 35
+  _radius: 6
+  _circumference: 37.699112
+  _brickDepth: 0.8
+  _minBrickHeight: 0.65
+  _maxBrickHeight: 1.1
+  _bricksPerLevel: 25
   _seed: 25
   _brickWidthVariation: 0.5
 --- !u!114 &1772446263434533140

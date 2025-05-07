@@ -29,7 +29,7 @@ public class HealthKitManager : MonoBehaviour
         if(Application.platform != RuntimePlatform.IPhonePlayer)
         {
             Debug.LogWarning("HealthKit is only available on iOS devices. This method will not execute on this platform. Spoofing data instead.");
-            HandleDistanceDataResponse(8050, null); // Spoofing data for testing purposes
+            HandleDistanceDataResponse(500, null); // Spoofing data for testing purposes
             return;
         }
 
