@@ -2,8 +2,8 @@ using UnityEngine;
 
 public class RotatesAroundOriginComponent : MonoBehaviour
 {
-    private float rotationSpeed = 0.3f;
-    private bool speedRandom = true; 
+    private float rotationSpeed = 0.6f;
+    readonly private bool speedRandom = true; 
 
     void Start()
     {
