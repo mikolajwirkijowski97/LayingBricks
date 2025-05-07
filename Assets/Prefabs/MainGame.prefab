@@ -906,12 +906,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   targetObject: {fileID: 7510932032080805119}
   targetCamera: {fileID: 3696464882113442272}
-  moveSensitivity: 0.5
-  moveSpeed: 10
-  rotationSensitivity: 3
+  moveSensitivity: 10
+  rotationSensitivity: 15
+  verticalMoveSpeed: 10
+  rotationSpeed: 10
+  zoomSpeed: 10
   zoomSensitivity: 0.5
-  minZoomDistance: 30
-  maxZoomDistance: 50
+  minZoomDistance: 50
+  maxZoomDistance: 70
+  invertZoomDirection: 0
+  fixedDownwardPitchAngle: 9
   clampYPosition: 1
   minYPosition: 15
   maxYOffset: 15
@@ -1138,6 +1142,18 @@ PrefabInstance:
       value: 30
       objectReference: {fileID: 0}
     - target: {fileID: 8164063314925076727, guid: ab7d0fdd4941b27438e51ae2dbffef6d, type: 3}
+      propertyPath: randomizeRotation
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8164063314925076727, guid: ab7d0fdd4941b27438e51ae2dbffef6d, type: 3}
+      propertyPath: runtimeRandomSeed
+      value: 51
+      objectReference: {fileID: 0}
+    - target: {fileID: 8164063314925076727, guid: ab7d0fdd4941b27438e51ae2dbffef6d, type: 3}
+      propertyPath: randomizeYRotation
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8164063314925076727, guid: ab7d0fdd4941b27438e51ae2dbffef6d, type: 3}
       propertyPath: prefabsToSpawn.Array.size
       value: 1
       objectReference: {fileID: 0}
@@ -1247,7 +1263,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 54498434153555680, guid: ab7d0fdd4941b27438e51ae2dbffef6d, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 56.1
+      value: 114.2
       objectReference: {fileID: 0}
     - target: {fileID: 54498434153555680, guid: ab7d0fdd4941b27438e51ae2dbffef6d, type: 3}
       propertyPath: m_LocalPosition.z

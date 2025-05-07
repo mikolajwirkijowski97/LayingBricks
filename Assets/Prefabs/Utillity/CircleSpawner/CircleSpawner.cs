@@ -74,7 +74,7 @@ public class VolumeSpawner : MonoBehaviour
 
     [SerializeField]
     [Tooltip("Should the spawned objects have a random rotation?")]
-    private bool randomizeRotation = false;
+    private bool randomizeYRotation = false;
 
     [Header("Runtime Options")]
     [SerializeField]
@@ -228,9 +228,9 @@ public class VolumeSpawner : MonoBehaviour
 
             // --- Calculate Rotation ---
             Quaternion spawnRotation = Quaternion.identity;
-            if (randomizeRotation)
+            if (randomizeYRotation)
             {
-                spawnRotation = Random.rotation;
+                spawnRotation.y = Random.Range(0f,360f); // Random Y rotation
             }
             else if (faceOutwards)
             {
